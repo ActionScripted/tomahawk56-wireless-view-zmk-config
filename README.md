@@ -23,5 +23,6 @@ On <- Off, On <- Off
 
 Official ZMK Studio App: https://zmk.studio/download \
 Firmware: https://github.com/Tomahawk-Keyboards/tomahawk56-wireless-view-zmk-config/releases/download/v1.0/firmware.zip
+FAQ: https://tomahawk-keyboards.com/pages/faq
 
 <img width="1020" height="750" alt="zmk" src="https://github.com/user-attachments/assets/1e681849-774a-49cf-ab46-c0e2c19e2068" />
