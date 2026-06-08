@@ -3,4 +3,5 @@ on: [push, pull_request, workflow_dispatch]
 jobs:
   build:
     # uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
-    uses: Tomahawk-Keyboards/zmk/.github/workflows/build-user-config.yml@add_tomahawk56_shield_2
+    # uses: Tomahawk-Keyboards/zmk/.github/workflows/build-user-config.yml@add_tomahawk56_shield_2
+    uses: Tomahawk-Keyboards/zmk/.github/workflows/build-user-config.yml@modify_backlight_layer
