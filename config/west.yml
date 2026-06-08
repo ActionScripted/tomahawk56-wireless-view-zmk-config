@@ -1,11 +1,22 @@
 manifest:
   remotes:
     - name: zmkfirmware
+      url-base: https://github.com/zmkfirmware
+    - name: tomahawk-keyboards
       url-base: https://github.com/Tomahawk-Keyboards
+    - name: urob
+      url-base: https://github.com/urob
   projects:
     - name: zmk
-      remote: zmkfirmware
+      remote: tomahawk-keyboards
       revision: add_tomahawk56_shield_2
       import: app/west.yml
+    - name: zmk-rgbled-widget
+      remote: tomahawk-keyboards
+      revision: main
+    - name: zmk-helpers
+      remote: urob
+      revision: 0b9e9d1dd9e86f70b4c8c2b0fab55c4f90c9d2e3
+      path: modules/helpers
   self:
     path: config
