@@ -20,10 +20,10 @@ Default bindings:
 - Speed Up: PgDn + 0
 - Speed Down: PgDn + P
 - Next Effect: PgDn + DEL
-- Previous Effect: PgDn + - 
+- Previous Effect: PgDn + -
 
 > [!CAUTION]
-> Physical power switch is located new USB-C connector. \
+> Physical power switch is located near USB-C connector. \
 > Left Half, Right Half \
 > On <- Off, On <- Off
 
