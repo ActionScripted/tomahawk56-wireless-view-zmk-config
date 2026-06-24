@@ -14,10 +14,10 @@
 ---
 include:
   - board: mikoto@7.3.0//zmk
-    shield: tomahawk56_left
+    shield: tomahawk56_left nice_view_adapter nice_view
     snippet: studio-rpc-usb-uart
     cmake-args: -DCONFIG_ZMK_STUDIO=y
   - board: mikoto@7.3.0//zmk
-    shield: tomahawk56_right
+    shield: tomahawk56_right nice_view_adapter nice_view
   - board: mikoto@7.3.0//zmk
     shield: settings_reset
