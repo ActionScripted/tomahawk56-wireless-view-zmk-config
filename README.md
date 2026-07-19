@@ -1,5 +1,43 @@
 # Tomahawk 56
-A ZSA Voyager & Lily58 hybrid
+Fork of [Tomahawk-Keyboards/tomahawk56-wireless-view-zmk-config](https://github.com/Tomahawk-Keyboards/tomahawk56-wireless-view-zmk-config) ([ZMK](https://zmk.dev)).
+
+## Setup
+
+```sh
+make setup   # once: mise install, west init, git hooks
+```
+
+## Build (local)
+
+```sh
+make build   # left + right + reset -> artifacts/*.uf2
+```
+Just one half: `make build-left` / `make build-right`. Details: `make help`, `scripts/build.sh`.
+
+## Flash
+
+Connect a half via USB-C, press **Left Shift** (left half) / **Right Shift** (right half) to enter bootloader mode, then:
+
+```sh
+make flash   # left, then right
+```
+Just one half: `make flash-left` / `make flash-right`. Details: `make help`, `scripts/flash.sh`.
+
+## Linting
+
+```sh
+make lint
+```
+Runs via `mise` (`.mise.toml`); `lefthook` runs the same checks on `git commit` (wired up by `make setup`).
+
+## Editing the keymap
+
+- **[customkeymap.com](https://customkeymap.com/) (recommended)**: web-based ZMK keymap visualizer/editor. Point it at this repo (owner/repo or a direct `.keymap` link), click keys to change bindings/layers/behaviors/combos, and commit straight back to GitHub — or export SVG/PNG or a `.keymap` file. No install required.
+- [keymap-editor](https://nickcoutsos.github.io/keymap-editor/): web app, GitHub OAuth, commits straight to this repo.
+- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half, studio-rpc enabled). Doesn't write back to the file.
+- Directly: `config/tomahawk56.keymap` (ASCII layer diagrams in comments)
+
+## Runtime key bindings
 
 > [!IMPORTANT]
 > Changing Bluetooth profile/switching between devices: PgDn + 1/2/3/4/5 \
@@ -21,6 +59,7 @@ Default bindings:
 - Speed Down: PgDn + P
 - Next Effect: PgDn + DEL
 - Previous Effect: PgDn + -
+- Enter bootloader mode (for flashing): Left Shift (left half) / Right Shift (right half) — these keys no longer type Shift
 
 > [!CAUTION]
 > Physical power switch is located near USB-C connector. \

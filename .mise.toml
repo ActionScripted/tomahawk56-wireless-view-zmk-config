@@ -1,0 +1,38 @@
+[tools]
+lefthook = "latest"
+shellcheck = "latest"
+shfmt = "latest"
+yamllint = "latest"
+
+[tasks.lint-shell]
+description = "shellcheck + shfmt (2-space indent, indented case arms) on shell scripts"
+usage = 'arg "[files]" var=#true help="files to lint (default: scripts/*.sh)"'
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+if [ -n "${usage_files:-}" ]; then
+  eval "files=($usage_files)"
+else
+  files=(scripts/*.sh)
+fi
+shellcheck "${files[@]}"
+shfmt -i 2 -ci -d "${files[@]}"
+'''
+
+[tasks.lint-yaml]
+description = "yamllint on YAML files"
+usage = 'arg "[files]" var=#true help="files to lint (default: compose.yaml, build.yaml, workflow files)"'
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+if [ -n "${usage_files:-}" ]; then
+  eval "files=($usage_files)"
+else
+  files=(compose.yaml build.yaml .github/workflows/*.yml)
+fi
+yamllint "${files[@]}"
+'''
+
+[tasks.lint]
+description = "Run all linters"
+depends = ["lint-shell", "lint-yaml"]

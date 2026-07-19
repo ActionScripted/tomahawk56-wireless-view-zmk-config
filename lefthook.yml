@@ -1,0 +1,9 @@
+pre-commit:
+  parallel: true
+  commands:
+    lint-shell:
+      glob: "scripts/*.sh"
+      run: mise run lint-shell {staged_files}
+    lint-yaml:
+      glob: "*.{yml,yaml}"
+      run: mise run lint-yaml {staged_files}

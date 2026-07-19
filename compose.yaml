@@ -1,0 +1,6 @@
+services:
+  zmk:
+    image: zmkfirmware/zmk-build-arm:stable
+    working_dir: /workspace
+    volumes:
+      - .:/workspace

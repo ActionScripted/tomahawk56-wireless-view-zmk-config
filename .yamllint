@@ -1,0 +1,6 @@
+extends: default
+
+rules:
+  line-length: disable
+  document-start: disable
+  truthy: disable   # GitHub Actions' `on:` key is a permanent false positive here
