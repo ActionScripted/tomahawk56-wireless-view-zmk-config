@@ -16,7 +16,7 @@ Just one half: `make build-left` / `make build-right`. Details: `make help`, `sc
 
 ## Flash
 
-Connect a half via USB-C, press **Left Shift** (left half) / **Right Shift** (right half) to enter bootloader mode, then:
+Connect both halves and keep them powered on. Press **Left Shift** once to flash the left half, or **Right Shift** once to flash the right half, then:
 
 ```sh
 make flash   # left, then right
@@ -59,7 +59,7 @@ Default bindings:
 - Speed Down: PgDn + P
 - Next Effect: PgDn + DEL
 - Previous Effect: PgDn + -
-- Enter bootloader mode (for flashing): Left Shift (left half) / Right Shift (right half) — these keys no longer type Shift
+- Enter bootloader mode (for flashing): connect both halves, then press Left Shift for the left half or Right Shift for the right half
 
 > [!CAUTION]
 > Physical power switch is located near USB-C connector. \
