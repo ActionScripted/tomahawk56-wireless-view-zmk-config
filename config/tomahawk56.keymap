@@ -45,7 +45,6 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
                         &kp LEFT_CONTROL  &kp LEFT_COMMAND  &mo 1   &kp SPACE            &kp RET &mo 2   &kp RIGHT_COMMAND  &kp RIGHT_ALT
             >;
 
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
 
         lower_layer {
@@ -58,14 +57,13 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 
             display-name = "Lower";
             bindings = <
-&bt BT_CLR_CMD 0  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4         &rgb_ug RGB_TOG_CMD 0  &rgb_ug RGB_HUI_CMD 0  &rgb_ug RGB_SAI_CMD 0  &rgb_ug RGB_BRI_CMD 0  &rgb_ug RGB_SPI_CMD 0  &rgb_ug RGB_EFF_CMD 0
-&ind_bat    &trans        &trans        &trans        &trans        &trans               &trans                 &rgb_ug RGB_HUD_CMD 0  &rgb_ug RGB_SAD_CMD 0  &rgb_ug RGB_BRD_CMD 0  &rgb_ug RGB_SPD_CMD 0  &rgb_ug RGB_EFR_CMD 0
+&bt BT_CLR  &bt BT_SEL 0  &bt BT_SEL 1  &bt BT_SEL 2  &bt BT_SEL 3  &bt BT_SEL 4         &rgb_ug RGB_TOG  &rgb_ug RGB_HUI  &rgb_ug RGB_SAI  &rgb_ug RGB_BRI  &rgb_ug RGB_SPI  &rgb_ug RGB_EFF
+&ind_bat    &trans        &trans        &trans        &trans        &trans               &trans           &rgb_ug RGB_HUD  &rgb_ug RGB_SAD  &rgb_ug RGB_BRD  &rgb_ug RGB_SPD  &rgb_ug RGB_EFR
 &kp GRAVE   &kp EXCL      &kp AT        &kp HASH      &kp DOLLAR    &kp PRCNT            &kp CARET  &kp AMPS   &kp KP_MULTIPLY  &kp LPAR  &kp RPAR  &kp TILDE
 &trans      &trans        &trans        &trans        &kp LBKT      &kp RBKT             &trans     &kp MINUS  &kp KP_PLUS      &kp LBRC  &kp RBRC  &kp PIPE
                           &trans        &trans        &trans        &trans               &trans  &trans     &trans     &trans
             >;
 
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
 
         raise_layer {
@@ -85,7 +83,6 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
                      &trans    &trans     &trans  &trans            &trans       &trans     &trans     &trans
             >;
 
-            sensor-bindings = <&inc_dec_kp C_VOL_UP C_VOL_DN>;
         };
 
         extra_1 { status = "reserved"; };
