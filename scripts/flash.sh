@@ -41,6 +41,44 @@ find_single_uf2_mount() {
   esac
 }
 
+wait_for_uf2_mount() {
+  local timeout="$1" status=0
+
+  for _ in $(seq 1 "$timeout"); do
+    find_single_uf2_mount || status=$?
+    case "$status" in
+      0) return 0 ;;
+      1) sleep 1 ;;
+      *) exit "$status" ;;
+    esac
+  done
+
+  return 1
+}
+
+copy_uf2_with_retries() {
+  local uf2="$1" retries="$2" mount="" dest=""
+
+  for _ in $(seq 1 "$retries"); do
+    if ! wait_for_uf2_mount 1; then
+      continue
+    fi
+    mount="$FOUND_UF2_MOUNT"
+
+    dest="${mount}$(basename "$uf2")"
+    echo "==> Found $mount - copying $uf2"
+    if cp "$uf2" "$mount" 2>/dev/null; then
+      COPIED_UF2_MOUNT="$mount"
+      return 0
+    fi
+
+    echo "==> Copy failed for $dest; waiting for the UF2 drive to settle..."
+    sleep 1
+  done
+
+  return 1
+}
+
 flash_one() {
   local target="$1"
   local uf2="artifacts/$target.uf2"
@@ -56,50 +94,17 @@ flash_one() {
   esac
   echo "Waiting up to 60s for it to mount as a UF2 bootloader drive under /Volumes ..."
 
-  local mount="" status=0
-  for _ in $(seq 1 60); do
-    if find_single_uf2_mount; then
-      mount="$FOUND_UF2_MOUNT"
-      break
-    else
-      status=$?
-    fi
-
-    [ "$status" -eq 1 ] || exit "$status"
-    sleep 1
-  done
-
-  [ -n "$mount" ] || {
+  local mount=""
+  if ! wait_for_uf2_mount 60; then
     echo "Timed out - no UF2 drive showed up. Is the board in bootloader mode?" >&2
     exit 1
-  }
+  fi
 
-  local dest="" copied=0
-  for _ in $(seq 1 10); do
-    if find_single_uf2_mount; then
-      mount="$FOUND_UF2_MOUNT"
-    else
-      status=$?
-      [ "$status" -eq 1 ] || exit "$status"
-      sleep 1
-      continue
-    fi
-
-    dest="${mount}$(basename "$uf2")"
-    echo "==> Found $mount - copying $uf2"
-    if cp "$uf2" "$mount" 2>/dev/null; then
-      copied=1
-      break
-    fi
-
-    echo "==> Copy failed for $dest; waiting for the UF2 drive to settle..."
-    sleep 1
-  done
-
-  [ "$copied" -eq 1 ] || {
+  if ! copy_uf2_with_retries "$uf2" 10; then
     echo "Failed to copy $uf2 to the UF2 drive after multiple attempts. Re-enter bootloader mode and retry." >&2
     exit 1
-  }
+  fi
+  mount="$COPIED_UF2_MOUNT"
 
   echo "==> Waiting for it to unmount and reboot..."
   for _ in $(seq 1 10); do
