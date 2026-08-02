@@ -57,25 +57,25 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             >;
         };
 
-        /* On an active layer, tap locks/unlocks that layer while hold remains real Cmd. */
+        /* Typing-first: Cmd requires an unmistakable half-second hold. */
         cmd_tog: cmd_tog {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <250>;
-            quick-tap-ms = <200>;
-            require-prior-idle-ms = <150>;
+            tapping-term-ms = <500>;
+            quick-tap-ms = <250>;
+            require-prior-idle-ms = <250>;
             bindings = <&kp>, <&tog>;
         };
 
-        /* Predictable thumbs: typing overlaps remain taps; holds require 250 ms. */
+        /* Typing-first: thumb modifiers require an unmistakable half-second hold. */
         safe_mt: safe_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <250>;
-            quick-tap-ms = <200>;
-            require-prior-idle-ms = <150>;
+            tapping-term-ms = <500>;
+            quick-tap-ms = <250>;
+            require-prior-idle-ms = <250>;
             bindings = <&kp>, <&kp>;
         };
     };
