@@ -16,7 +16,8 @@ Just one half: `make build-left` / `make build-right`. Details: `make help`, `sc
 
 ## Flash
 
-Connect both halves and keep them powered on. Press **Left Shift** once to flash the left half, or **Right Shift** once to flash the right half, then:
+Connect both halves and keep them powered on. Tap the top-left Base corner to
+flash the left half, or the top-right Base corner to flash the right half, then:
 
 ```sh
 make flash   # left, then right
@@ -39,27 +40,29 @@ Runs via `mise` (`.mise.toml`); `lefthook` runs the same checks on `git commit` 
 
 ## Runtime key bindings
 
-> [!IMPORTANT]
-> Changing Bluetooth profile/switching between devices: PgDn + 1/2/3/4/5 \
-> Erasing Bluetooth profile: PgDn + ESC \
-> Bluetooth Backlight statuses: Solid 🔵 - connected, blinking 🔵 - open/advertising, blinking 🔴 - disconnected \
-> Battery level: PgDn + Ins (Solid 🟢 - above 80%, solid 🟡 - above 20%, solid 🔴 - below 20%, 🟣 - not detected)
+The source-defined Cruiser layout has four layers:
 
-Default bindings:
-- Lower layer: PgDn + any key
-- Upper layer: PgUp + any key
-- Toggle RGB On/Off: PgDn + 6
-- Hue Up: PgDn + 7
-- Hue Down: PgDn + U
-- Saturation Up: PgDn + 8
-- Saturation Down: PgDn + I
-- Brightness Up: PgDn + 9
-- Brightness Down: PgDn + O (letter)
-- Speed Up: PgDn + 0
-- Speed Down: PgDn + P
-- Next Effect: PgDn + DEL
-- Previous Effect: PgDn + -
-- Enter bootloader mode (for flashing): connect both halves, then press Left Shift for the left half or Right Shift for the right half
+- Hold `F` or `J` for Symbols.
+- Hold `D` or `K` for Functional.
+- Hold `S` or `L` for Magic.
+- Chord `D+F` or `J+K` on Base for Escape with one hand.
+- Tap the Base key below the top-left bootloader corner to reboot with
+  `&sys_reset`; it does not erase settings.
+- On an active layer, tap either Space/Cmd thumb to lock or unlock that layer;
+  hold it for Cmd.
+- Tap the top-left or top-right Base corner to enter that half's bootloader.
+
+The mirrored thumbs tap Tab, Backspace, Space, and Enter; holding them produces
+Ctrl, Shift, Cmd, and Option respectively. Magic `Q/W/E` controls RGB toggle,
+brightness down, and brightness up. See
+[`tomahawk56_cruiser_phase1_migration_plan.md`](tomahawk56_cruiser_phase1_migration_plan.md)
+for all four diagrams and the exact Defy migration.
+
+> [!IMPORTANT]
+> Pointing support changes the HID descriptor. Delete and re-pair the keyboard
+> on Bluetooth hosts if mouse keys do not work after flashing. If ZMK Studio was
+> previously used, choose **Restore Stock Settings** before testing this source
+> layout, then restore split pairing if the reset cleared it.
 
 > [!CAUTION]
 > Physical power switch is located near USB-C connector. \

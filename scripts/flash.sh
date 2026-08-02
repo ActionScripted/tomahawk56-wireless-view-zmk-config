@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Copies a built .uf2 onto a connected UF2 bootloader drive. Bootloader mode is
 # entered with a key press, not a physical button: config/tomahawk56.keymap's
-# default layer binds &bootloader directly to the Left Shift and Right Shift
+# Base layer binds &bootloader directly to the top-left and top-right corner
 # positions. On the split right half, that key press is handled through the
 # left/central half, so both halves must be on when using the in-keymap
 # bootloader shortcut. This replicates Zephyr's own
@@ -88,9 +88,9 @@ flash_one() {
   }
 
   case "$target" in
-    left) echo "Connect the left half via USB-C, then press Left Shift (single press)." ;;
-    right) echo "Connect the right half via USB-C, keep both halves powered on, then press Right Shift once from the full split." ;;
-    reset) echo "Connect the half you want to reset via USB-C, keep both halves powered on if targeting the right half, then press its Left/Right Shift once." ;;
+    left) echo "Connect the left half via USB-C, then tap the top-left Base corner." ;;
+    right) echo "Connect the right half via USB-C, keep both halves powered on, then tap the top-right Base corner." ;;
+    reset) echo "Connect the half you want to reset via USB-C, then use that half's top Base corner to enter its bootloader." ;;
   esac
   echo "Waiting up to 60s for it to mount as a UF2 bootloader drive under /Volumes ..."
 
