@@ -45,7 +45,11 @@ wait_for_uf2_mount() {
   local timeout="$1" status=0
 
   for _ in $(seq 1 "$timeout"); do
-    find_single_uf2_mount || status=$?
+    if find_single_uf2_mount; then
+      status=0
+    else
+      status=$?
+    fi
     case "$status" in
       0) return 0 ;;
       1) sleep 1 ;;
