@@ -1,0 +1,5 @@
+description: Tomahawk56 layer RGB synchronization and underglow controls
+
+compatible: "zmk,behavior-layer-rgb-sync"
+
+include: two_param.yaml

@@ -1,0 +1,7 @@
+menuconfig TOMAHAWK56_LAYER_RGB
+    bool "Tomahawk56 per-key layer lighting"
+    default y
+    depends on ZMK_RGB_UNDERGLOW
+    help
+      Use the Tomahawk56's 28 addressable LEDs as a persistent per-key
+      layer map inspired by the Cruiser Dygma Defy layout.

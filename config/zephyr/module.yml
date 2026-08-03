@@ -1,0 +1,6 @@
+name: zmk-vfx-tomahawk56-layer-rgb
+build:
+  cmake: .
+  kconfig: Kconfig
+  settings:
+    dts_root: .

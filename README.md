@@ -58,6 +58,35 @@ brightness down, and brightness up. See
 [`tomahawk56_cruiser_phase1_migration_plan.md`](tomahawk56_cruiser_phase1_migration_plan.md)
 for all four diagrams and the exact Defy migration.
 
+## Layer lighting
+
+The firmware uses the 28 addressable LEDs on each half as 24 main-key LEDs and
+four thumb LEDs. There is no separate set of underglow-only pixels on the
+Tomahawk56; ZMK's underglow controls power and dim this per-key map.
+RGB is forced on at each power-up and remains on while the keyboard is awake;
+the Magic-layer RGB toggle can still turn it off for the current session.
+
+- Base lights the five active main columns on each half white and leaves both
+  physical outer columns dark. The thumbs use the Defy role colors for Ctrl,
+  Shift, Cmd, and Option.
+- Symbols leaves the number row and outer columns dark, then lights the three
+  symbol rows orange, teal, and yellow from top to bottom.
+- Functional lights F1-F12 purple. Media is green; delete/editing is red;
+  arrows are teal; document navigation is orange; window/navigation chords are
+  blue or magenta; and application shortcuts are lime.
+- Magic follows the Defy groups: RGB controls blue, macros red/orange/yellow/
+  green, mouse movement teal, scrolling magenta, and mouse buttons blue/green.
+  The primary/middle/secondary buttons use the Defy's distinct light blue;
+  back/forward use green.
+
+The left half synchronizes the active layer, brightness, and on/off state to
+the right half over ZMK's existing split behavior transport. Battery and BLE
+indicators remain on their independent RGB override channels. Layer changes,
+RGB controls, split reconnections, and activity-state changes refresh the map
+as events occur; the firmware does not wake periodically to poll RGB state.
+For the static solid effect, each requested change renders once and stops the
+underlying 20 Hz animation timer; animated underglow effects retain that timer.
+
 > [!IMPORTANT]
 > Pointing support changes the HID descriptor. Delete and re-pair the keyboard
 > on Bluetooth hosts if mouse keys do not work after flashing. If ZMK Studio was

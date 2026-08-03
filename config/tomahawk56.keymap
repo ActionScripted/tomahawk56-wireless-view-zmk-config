@@ -13,6 +13,7 @@
 #define L_SYM   1
 #define L_FUNC  2
 #define L_MAGIC 3
+#define LRGB(cmd) &lrgb_sync (0x100 + (cmd)) 0
 
 nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 
@@ -22,27 +23,32 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 
 / {
     behaviors {
-        /* Typing-first: interruptions cannot force a layer hold. */
+        /* Internal global behavior; node name must fit ZMK's 8-byte BLE field. */
+        lrgb_sync: lrgb {
+            compatible = "zmk,behavior-layer-rgb-sync";
+            #binding-cells = <2>;
+        };
+
+        /*
+         * Strictly time-based layer holds. A recent key press forces an immediate tap,
+         * so neither same-hand nor cross-hand typing rolls can activate a layer.
+         */
         left_layer_tap: left_layer_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <350>;
-            quick-tap-ms = <175>;
-            require-prior-idle-ms = <200>;
-            retro-tap;
-            bindings = <&mo>, <&kp>;
+            tapping-term-ms = <200>;
+            require-prior-idle-ms = <250>;
+            bindings = <&lrgb_sync>, <&kp>;
         };
 
         right_layer_tap: right_layer_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <350>;
-            quick-tap-ms = <175>;
-            require-prior-idle-ms = <200>;
-            retro-tap;
-            bindings = <&mo>, <&kp>;
+            tapping-term-ms = <200>;
+            require-prior-idle-ms = <250>;
+            bindings = <&lrgb_sync>, <&kp>;
         };
 
         /* Active-layer interruptions cannot force Cmd. */
@@ -65,17 +71,19 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             bindings = <&kp>, <&kp>;
         };
 
-        /* Space gets extra protection: recent typing and solitary long presses stay taps. */
+        /*
+         * Thumb rolls resolve by release order: releasing this key first is Space;
+         * releasing another key first while this remains down is a Cmd chord.
+         */
         safe_space_mt: safe_space_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
-            tapping-term-ms = <350>;
-            quick-tap-ms = <175>;
-            require-prior-idle-ms = <200>;
-            retro-tap;
+            flavor = "balanced";
+            tapping-term-ms = <200>;
+            quick-tap-ms = <150>;
             bindings = <&kp>, <&kp>;
         };
+
     };
 
     macros {
@@ -107,20 +115,23 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
     combos {
         compatible = "zmk,combos";
 
-        /* Mirrored one-hand Escape chords; Base-only to preserve layer actions. */
+        /* Mirrored upper-alpha Escape chords, isolated from all layer hold-taps. */
         escape_left {
             timeout-ms = <35>;
-            key-positions = <27 28>; /* D + F */
+            require-prior-idle-ms = <100>;
+            key-positions = <15 16>; /* E + R */
             bindings = <&kp ESC>;
             layers = <L_BASE>;
         };
 
         escape_right {
             timeout-ms = <35>;
-            key-positions = <31 32>; /* J + K */
+            require-prior-idle-ms = <100>;
+            key-positions = <19 20>; /* U + I */
             bindings = <&kp ESC>;
             layers = <L_BASE>;
         };
+
     };
 
     keymap {
@@ -149,13 +160,13 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 // | TRNS |TRNS |TRNS | TRNS | TRNS | TRNS |        | TRNS |TRNS |TRNS |TRNS |TRNS |TRNS |
 // | TRNS |  ^  |  /  |  *   |  +   |  \  |        |  =   |  !  |  &  |  |  |  ?  |TRNS |
 // | TRNS |  #  |  @  |  _   |  -   |  $   |        |  %   |  :  |  ;  |  ,  |  .  |TRNS |
-// | TRNS |  <  |  (  |  [   |  `   |  '   |        |  ~   |  }  |  ]  |  )  |  >  |TRNS |
+// | TRNS |  <  |  (  |  [   |  {   |  `   |        |  ~   |  }  |  ]  |  )  |  >  |TRNS |
 //              |TRNS |TRNS  |CMD/TOG|TRNS |       |TRNS |CMD/TOG|TRNS |TRNS |
             bindings = <
 &trans  &trans     &trans     &trans     &trans      &trans      &trans     &trans      &trans    &trans     &trans  &trans
 &trans  &kp CARET  &kp FSLH   &kp STAR   &kp PLUS    &kp BSLH    &kp EQUAL  &kp EXCL    &kp AMPS  &kp PIPE   &kp QMARK &trans
 &trans  &kp HASH   &kp AT     &kp UNDER  &kp MINUS   &kp DOLLAR  &kp PRCNT  &kp COLON   &kp SEMI  &kp COMMA  &kp DOT   &trans
-&trans  &kp LT     &kp LPAR   &kp LBKT   &kp GRAVE   &kp SQT     &kp TILDE  &kp RBRC    &kp RBKT  &kp RPAR   &kp GT    &trans
+&trans  &kp LT     &kp LPAR   &kp LBKT   &kp LBRC    &kp GRAVE   &kp TILDE  &kp RBRC    &kp RBKT  &kp RPAR   &kp GT    &trans
                    &trans  &trans  &cmd_tog LGUI L_SYM  &trans    &trans  &cmd_tog RGUI L_SYM  &trans  &trans
             >;
         };
@@ -187,7 +198,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 //                    |TRNS |TRNS |CMD/TOG|TRNS |     |TRNS |CMD/TOG|TRNS |TRNS |
             bindings = <
 &none  &none                 &none                  &none               &none        &none       &none              &none              &none             &none               &none       &none
-&none  &rgb_ug RGB_TOG       &rgb_ug RGB_BRD        &rgb_ug RGB_BRI     &none        &none       &none              &mkp MB1           &mkp MB3          &mkp MB2            &none       &none
+&none  LRGB(RGB_TOG_CMD)     LRGB(RGB_BRD_CMD)      LRGB(RGB_BRI_CMD)  &none        &none       &none              &mkp MB1           &mkp MB3          &mkp MB2            &none       &none
 &none  &lock_screen          &sound_prefs           &kp LG(LA(D))       &screenshot  &none       &mmv MOVE_LEFT     &mmv MOVE_DOWN     &mmv MOVE_UP      &mmv MOVE_RIGHT     &mkp MB4   &none
 &none  &none                 &none                  &none               &none        &ind_bat    &msc SCRL_LEFT     &msc SCRL_DOWN     &msc SCRL_UP      &msc SCRL_RIGHT     &mkp MB5   &none
                             &trans  &trans  &cmd_tog LGUI L_MAGIC  &trans    &trans  &cmd_tog RGUI L_MAGIC  &trans  &trans
