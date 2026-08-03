@@ -1,0 +1,15 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * Mid-typing-streak space held lazily past the tapping term: B tap, then space
+ * pressed 60 ms later and held 400 ms. require-prior-idle must make it Space
+ * instantly; the long hold must NOT turn it into Cmd.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(1,0,10)
+        ZMK_MOCK_RELEASE(1,0,50)
+        ZMK_MOCK_PRESS(0,0,400)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

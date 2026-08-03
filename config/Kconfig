@@ -4,4 +4,4 @@ menuconfig TOMAHAWK56_LAYER_RGB
     depends on ZMK_RGB_UNDERGLOW
     help
       Use the Tomahawk56's 28 addressable LEDs as a persistent per-key
-      layer map inspired by the Cruiser Dygma Defy layout.
+      layer map with Dygma Defy-inspired colors.

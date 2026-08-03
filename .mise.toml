@@ -21,14 +21,14 @@ shfmt -i 2 -ci -d "${files[@]}"
 
 [tasks.lint-yaml]
 description = "yamllint on YAML files"
-usage = 'arg "[files]" var=#true help="files to lint (default: compose.yaml, build.yaml, workflow files)"'
+usage = 'arg "[files]" var=#true help="files to lint (default: compose.yaml, build.yaml, lefthook.yml, workflow files)"'
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 if [ -n "${usage_files:-}" ]; then
   eval "files=($usage_files)"
 else
-  files=(compose.yaml build.yaml .github/workflows/*.yml)
+  files=(compose.yaml build.yaml lefthook.yml .github/workflows/*.yml)
 fi
 yamllint "${files[@]}"
 '''

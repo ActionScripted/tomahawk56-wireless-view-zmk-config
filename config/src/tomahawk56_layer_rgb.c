@@ -1,5 +1,5 @@
 /*
- * Tomahawk56 Cruiser per-key layer lighting
+ * Tomahawk56 per-key layer lighting
  * SPDX-License-Identifier: MIT
  */
 
@@ -25,134 +25,138 @@
 #define LED_COUNT 28
 #define MAIN_ROWS 4
 #define MAIN_COLS 6
+#define MAIN_KEY_COUNT (MAIN_ROWS * MAIN_COLS)
 #define THUMB_COUNT 4
-#define LRGB_CONTROL_BASE 0x100
-#define LRGB_LAYER_BASE 0x200
 #define LRGB_RETRY_MS 50
 #define LRGB_CONNECT_RETRY_MS 500
 #define LRGB_CONNECT_ATTEMPTS 8
+
+/*
+ * lrgb_sync behavior param1 encoding. The behavior is global, so one binding
+ * carries three kinds of traffic:
+ *   0x000-0x0FF  state sync sent central -> peripheral: param1 is the active
+ *                layer, param2 is brightness with the on/off flag in BIT(8).
+ *   0x100-0x1FF  RGB underglow control command (RGB_TOG etc.), forwarded to
+ *                &rgb_ug. Must match the LRGB() macro in tomahawk56.keymap.
+ *   0x200-0x2FF  layer hold from the keymap's layer_tap: param1 - 0x200 is
+ *                the layer to (de)activate.
+ */
+#define LRGB_CONTROL_BASE 0x100
+#define LRGB_LAYER_BASE 0x200
 
 #ifndef ZMK_RGB_UNDERGLOW_STATUS_CHANNEL_LAYER
 #define ZMK_RGB_UNDERGLOW_STATUS_CHANNEL_LAYER 1
 #endif
 
-enum cruiser_color {
-    CRUISER_OFF,
-    CRUISER_WHITE,
-    CRUISER_ORANGE,
-    CRUISER_TEAL,
-    CRUISER_YELLOW,
-    CRUISER_PURPLE,
-    CRUISER_GREEN,
-    CRUISER_RED,
-    CRUISER_BLUE,
-    CRUISER_LIGHT_BLUE,
-    CRUISER_MAGENTA,
-    CRUISER_LIME,
+BUILD_ASSERT(MAIN_KEY_COUNT + THUMB_COUNT == LED_COUNT,
+             "the LED chain is the 24 main keys followed by the 4 thumbs");
+
+enum key_color {
+    COLOR_OFF,
+    COLOR_WHITE,
+    COLOR_ORANGE,
+    COLOR_TEAL,
+    COLOR_YELLOW,
+    COLOR_PURPLE,
+    COLOR_GREEN,
+    COLOR_RED,
+    COLOR_BLUE,
+    COLOR_LIGHT_BLUE,
+    COLOR_MAGENTA,
+    COLOR_LIME,
 };
 
 /* Defy-inspired hues. Brightness is supplied by the user's underglow state. */
 static const struct zmk_led_hsb palette[] = {
-    [CRUISER_OFF] = {0, 0, 0},       [CRUISER_WHITE] = {0, 0, 100},
-    [CRUISER_ORANGE] = {38, 100, 100}, [CRUISER_TEAL] = {174, 100, 100},
-    [CRUISER_YELLOW] = {55, 100, 100}, [CRUISER_PURPLE] = {275, 85, 100},
-    [CRUISER_GREEN] = {120, 100, 100}, [CRUISER_RED] = {0, 100, 100},
-    [CRUISER_BLUE] = {220, 100, 100}, [CRUISER_MAGENTA] = {310, 100, 100},
+    [COLOR_OFF] = {0, 0, 0},       [COLOR_WHITE] = {0, 0, 100},
+    [COLOR_ORANGE] = {38, 100, 100}, [COLOR_TEAL] = {174, 100, 100},
+    [COLOR_YELLOW] = {55, 100, 100}, [COLOR_PURPLE] = {275, 85, 100},
+    [COLOR_GREEN] = {120, 100, 100}, [COLOR_RED] = {0, 100, 100},
+    [COLOR_BLUE] = {220, 100, 100}, [COLOR_MAGENTA] = {310, 100, 100},
     /* Defy palette slot 7 is RGB (87, 164, 255). */
-    [CRUISER_LIGHT_BLUE] = {213, 66, 100},
-    [CRUISER_LIME] = {78, 100, 100},
+    [COLOR_LIGHT_BLUE] = {213, 66, 100},
+    [COLOR_LIME] = {78, 100, 100},
 };
 
-/* Each row is left-to-right as seen by the user. */
+/*
+ * Per-layer color maps. Each row is left-to-right as seen by the user; the
+ * central (left) and peripheral (right) halves each compile their own maps
+ * under the same names.
+ */
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 static const uint8_t base_main[MAIN_ROWS][MAIN_COLS] = {
-    {CRUISER_OFF, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE},
-    {CRUISER_OFF, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE},
-    {CRUISER_OFF, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE},
-    {CRUISER_OFF, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE},
+    {COLOR_OFF, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+    {COLOR_OFF, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+    {COLOR_OFF, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
+    {COLOR_OFF, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE},
 };
 
 static const uint8_t symbols_main[MAIN_ROWS][MAIN_COLS] = {
-    {CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF},
-    {CRUISER_OFF, CRUISER_ORANGE, CRUISER_ORANGE, CRUISER_ORANGE, CRUISER_ORANGE, CRUISER_ORANGE},
-    {CRUISER_OFF, CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL},
-    {CRUISER_OFF, CRUISER_YELLOW, CRUISER_YELLOW, CRUISER_YELLOW, CRUISER_YELLOW, CRUISER_YELLOW},
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
+    {COLOR_OFF, COLOR_ORANGE, COLOR_ORANGE, COLOR_ORANGE, COLOR_ORANGE, COLOR_ORANGE},
+    {COLOR_OFF, COLOR_TEAL, COLOR_TEAL, COLOR_TEAL, COLOR_TEAL, COLOR_TEAL},
+    {COLOR_OFF, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW},
 };
 
 static const uint8_t functional_main[MAIN_ROWS][MAIN_COLS] = {
-    {CRUISER_PURPLE, CRUISER_PURPLE, CRUISER_PURPLE, CRUISER_PURPLE, CRUISER_PURPLE, CRUISER_PURPLE},
-    {CRUISER_OFF, CRUISER_GREEN, CRUISER_GREEN, CRUISER_GREEN, CRUISER_GREEN, CRUISER_GREEN},
-    {CRUISER_OFF, CRUISER_ORANGE, CRUISER_ORANGE, CRUISER_TEAL, CRUISER_TEAL, CRUISER_LIME},
-    {CRUISER_OFF, CRUISER_BLUE, CRUISER_BLUE, CRUISER_BLUE, CRUISER_BLUE, CRUISER_LIME},
+    {COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE},
+    {COLOR_OFF, COLOR_GREEN, COLOR_GREEN, COLOR_GREEN, COLOR_GREEN, COLOR_GREEN},
+    {COLOR_OFF, COLOR_ORANGE, COLOR_ORANGE, COLOR_TEAL, COLOR_TEAL, COLOR_LIME},
+    {COLOR_OFF, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_LIME},
 };
 
 static const uint8_t magic_main[MAIN_ROWS][MAIN_COLS] = {
-    {CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF},
-    {CRUISER_OFF, CRUISER_BLUE, CRUISER_BLUE, CRUISER_BLUE, CRUISER_OFF, CRUISER_OFF},
-    {CRUISER_OFF, CRUISER_RED, CRUISER_ORANGE, CRUISER_YELLOW, CRUISER_GREEN, CRUISER_OFF},
-    {CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_GREEN},
-};
-#else
-static const uint8_t base_main_right[MAIN_ROWS][MAIN_COLS] = {
-    {CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_OFF},
-    {CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_OFF},
-    {CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_OFF},
-    {CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_WHITE, CRUISER_OFF},
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
+    {COLOR_OFF, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_OFF, COLOR_OFF},
+    {COLOR_OFF, COLOR_RED, COLOR_ORANGE, COLOR_YELLOW, COLOR_GREEN, COLOR_OFF},
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_GREEN},
 };
 
-static const uint8_t symbols_main_right[MAIN_ROWS][MAIN_COLS] = {
-    {CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF},
-    {CRUISER_ORANGE, CRUISER_ORANGE, CRUISER_ORANGE, CRUISER_ORANGE, CRUISER_ORANGE, CRUISER_OFF},
-    {CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL, CRUISER_OFF},
-    {CRUISER_YELLOW, CRUISER_YELLOW, CRUISER_YELLOW, CRUISER_YELLOW, CRUISER_YELLOW, CRUISER_OFF},
-};
-
-static const uint8_t functional_main_right[MAIN_ROWS][MAIN_COLS] = {
-    {CRUISER_PURPLE, CRUISER_PURPLE, CRUISER_PURPLE, CRUISER_PURPLE, CRUISER_PURPLE, CRUISER_PURPLE},
-    {CRUISER_RED, CRUISER_RED, CRUISER_RED, CRUISER_RED, CRUISER_ORANGE, CRUISER_OFF},
-    {CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL, CRUISER_ORANGE, CRUISER_OFF},
-    {CRUISER_MAGENTA, CRUISER_MAGENTA, CRUISER_MAGENTA, CRUISER_MAGENTA, CRUISER_ORANGE, CRUISER_OFF},
-};
-
-static const uint8_t magic_main_right[MAIN_ROWS][MAIN_COLS] = {
-    {CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF, CRUISER_OFF},
-    {CRUISER_OFF, CRUISER_LIGHT_BLUE, CRUISER_LIGHT_BLUE, CRUISER_LIGHT_BLUE, CRUISER_OFF, CRUISER_OFF},
-    {CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL, CRUISER_TEAL, CRUISER_GREEN, CRUISER_OFF},
-    {CRUISER_MAGENTA, CRUISER_MAGENTA, CRUISER_MAGENTA, CRUISER_MAGENTA, CRUISER_GREEN, CRUISER_OFF},
-};
-#endif
-
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 /* Thumb LEDs are chained from Opt/Enter back toward Ctrl/Tab. */
 static const uint8_t base_thumbs[THUMB_COUNT] = {
-    CRUISER_GREEN, CRUISER_WHITE, CRUISER_ORANGE, CRUISER_BLUE};
+    COLOR_GREEN, COLOR_WHITE, COLOR_ORANGE, COLOR_BLUE};
 #else
-/* The mirrored right thumb LED chain runs from Ctrl/Tab toward Opt/Enter. */
-static const uint8_t base_thumbs[THUMB_COUNT] = {
-    CRUISER_BLUE, CRUISER_ORANGE, CRUISER_WHITE, CRUISER_GREEN};
-#endif
-
-static const uint16_t led_indices[LED_COUNT] = {
-    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
-    14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+static const uint8_t base_main[MAIN_ROWS][MAIN_COLS] = {
+    {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_OFF},
+    {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_OFF},
+    {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_OFF},
+    {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_OFF},
 };
 
-static struct zmk_led_hsb colors[LED_COUNT];
-static uint8_t last_layer = UINT8_MAX;
-static uint8_t last_brightness = UINT8_MAX;
-static bool layer_channel_active;
-static bool startup_rgb_forced_on;
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-static uint8_t last_synced_layer = UINT8_MAX;
-static uint8_t last_synced_brightness = UINT8_MAX;
-static bool last_synced_on;
-static uint8_t connect_sync_attempts;
-#else
-static uint8_t remote_layer;
-static uint8_t remote_brightness;
-static bool remote_on;
-static bool remote_initialized;
+static const uint8_t symbols_main[MAIN_ROWS][MAIN_COLS] = {
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
+    {COLOR_ORANGE, COLOR_ORANGE, COLOR_ORANGE, COLOR_ORANGE, COLOR_ORANGE, COLOR_OFF},
+    {COLOR_TEAL, COLOR_TEAL, COLOR_TEAL, COLOR_TEAL, COLOR_TEAL, COLOR_OFF},
+    {COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_OFF},
+};
+
+static const uint8_t functional_main[MAIN_ROWS][MAIN_COLS] = {
+    {COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE, COLOR_PURPLE},
+    {COLOR_RED, COLOR_RED, COLOR_RED, COLOR_RED, COLOR_ORANGE, COLOR_OFF},
+    {COLOR_TEAL, COLOR_TEAL, COLOR_TEAL, COLOR_TEAL, COLOR_ORANGE, COLOR_OFF},
+    {COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_ORANGE, COLOR_OFF},
+};
+
+static const uint8_t magic_main[MAIN_ROWS][MAIN_COLS] = {
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
+    {COLOR_OFF, COLOR_LIGHT_BLUE, COLOR_LIGHT_BLUE, COLOR_LIGHT_BLUE, COLOR_OFF, COLOR_OFF},
+    {COLOR_TEAL, COLOR_TEAL, COLOR_TEAL, COLOR_TEAL, COLOR_GREEN, COLOR_OFF},
+    {COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_GREEN, COLOR_OFF},
+};
+
+/* The mirrored right thumb LED chain runs from Ctrl/Tab toward Opt/Enter. */
+static const uint8_t base_thumbs[THUMB_COUNT] = {
+    COLOR_BLUE, COLOR_ORANGE, COLOR_WHITE, COLOR_GREEN};
 #endif
+
+/* Indexed by keymap layer number (see the L_* defines in tomahawk56.keymap).
+ * Thumbs keep their Base role colors on every layer. */
+static const uint8_t (*const main_maps[])[MAIN_COLS] = {
+    base_main,
+    symbols_main,
+    functional_main,
+    magic_main,
+};
 
 /* Physical LED index for each visually left-to-right main-key position. */
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
@@ -172,46 +176,48 @@ static const uint8_t main_pixels[MAIN_ROWS][MAIN_COLS] = {
 };
 #endif
 
-static const uint8_t (*main_map_for_layer(uint8_t layer))[MAIN_COLS] {
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-    switch (layer) {
-    case 1: return symbols_main;
-    case 2: return functional_main;
-    case 3: return magic_main;
-    default: return base_main;
-    }
-#else
-    switch (layer) {
-    case 1: return symbols_main_right;
-    case 2: return functional_main_right;
-    case 3: return magic_main_right;
-    default: return base_main_right;
-    }
-#endif
-}
+static const uint16_t led_indices[LED_COUNT] = {
+    0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
+    14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27,
+};
 
-static const uint8_t *thumb_map_for_layer(uint8_t layer) {
-    ARG_UNUSED(layer);
-    return base_thumbs;
+static struct zmk_led_hsb colors[LED_COUNT];
+static uint8_t last_layer = UINT8_MAX;
+static uint8_t last_brightness = UINT8_MAX;
+static bool layer_channel_active;
+static bool startup_rgb_forced_on;
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+static uint8_t last_synced_layer = UINT8_MAX;
+static uint8_t last_synced_brightness = UINT8_MAX;
+static bool last_synced_on;
+static uint8_t connect_sync_attempts;
+#else
+/* State received from the central via the sync payload. */
+static uint8_t remote_layer;
+static uint8_t remote_brightness;
+static bool remote_on;
+static bool remote_initialized;
+#endif
+
+static const uint8_t (*main_map_for_layer(uint8_t layer))[MAIN_COLS] {
+    return layer < ARRAY_SIZE(main_maps) ? main_maps[layer] : main_maps[0];
 }
 
 static int render_layer(uint8_t layer, uint8_t brightness) {
     const uint8_t (*main_map)[MAIN_COLS] = main_map_for_layer(layer);
-    const uint8_t *thumb_map = thumb_map_for_layer(layer);
 
     for (uint8_t i = 0; i < LED_COUNT; i++) {
-        colors[i] = palette[CRUISER_OFF];
+        colors[i] = palette[COLOR_OFF];
     }
 
     for (uint8_t row = 0; row < MAIN_ROWS; row++) {
         for (uint8_t col = 0; col < MAIN_COLS; col++) {
-            enum cruiser_color color = main_map[row][col];
-            colors[main_pixels[row][col]] = palette[color];
+            colors[main_pixels[row][col]] = palette[main_map[row][col]];
         }
     }
 
     for (uint8_t thumb = 0; thumb < THUMB_COUNT; thumb++) {
-        colors[24 + thumb] = palette[thumb_map[thumb]];
+        colors[MAIN_KEY_COUNT + thumb] = palette[base_thumbs[thumb]];
     }
 
     for (uint8_t i = 0; i < LED_COUNT; i++) {

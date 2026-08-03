@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := help
 
 # Phony (non-file) targets
-.PHONY: setup init update build build-left build-right build-reset clean flash flash-left flash-right flash-reset lint lint-shell lint-yaml hooks help
+.PHONY: setup init update build build-left build-right build-reset test clean flash flash-left flash-right flash-reset lint lint-shell lint-yaml hooks help
 
 help: ## Show available commands
 	@echo "Usage: make [command]"
@@ -52,6 +52,10 @@ build-reset: ## Build just the settings_reset image
 update: ## west update (pull latest pinned zmk/module revisions)
 	@$(RUN) ./scripts/build.sh update
 
+test: ## Run behavior tests (tests/) on ZMK's native simulator
+	@$(RUN) sh -c "west zephyr-export >/dev/null && \
+		ZMK_SRC_DIR=zmk/app ZMK_BUILD_DIR=/workspace/build zmk/app/run-test.sh /workspace/tests"
+
 clean: ## Full reset: remove the west workspace + build output (re-run `make init` after)
 	@rm -rf build artifacts .west zmk zmk-rgbled-widget modules optional zephyr
 
@@ -82,5 +86,5 @@ lint: ## Run all linters
 lint-shell: ## shellcheck + shfmt on scripts/*.sh
 	@mise run lint-shell
 
-lint-yaml: ## yamllint on compose.yaml, build.yaml, and workflow files
+lint-yaml: ## yamllint on compose.yaml, build.yaml, lefthook.yml, and workflow files
 	@mise run lint-yaml

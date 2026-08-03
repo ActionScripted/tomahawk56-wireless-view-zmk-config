@@ -24,6 +24,15 @@ make flash   # left, then right
 ```
 Just one half: `make flash-left` / `make flash-right`. Details: `make help`, `scripts/flash.sh`.
 
+## Testing
+
+```sh
+make test
+```
+Runs the behavior tests in `tests/` on ZMK's native simulator (timed key
+events in, emitted keycodes diffed against snapshots). Currently covers the
+Space/Cmd thumb keys; see `tests/space-cmd/README.md`.
+
 ## Linting
 
 ```sh
@@ -40,7 +49,8 @@ Runs via `mise` (`.mise.toml`); `lefthook` runs the same checks on `git commit` 
 
 ## Runtime key bindings
 
-The source-defined Cruiser layout has four layers:
+The source-defined layout (derived from the Dygma Defy "Cruiser" layout) has
+four layers:
 
 - Hold `F` or `J` for Symbols.
 - Hold `D` or `K` for Functional.
@@ -53,9 +63,11 @@ The source-defined Cruiser layout has four layers:
 - Tap the top-left or top-right Base corner to enter that half's bootloader.
 
 The mirrored thumbs tap Tab, Backspace, Space, and Enter; holding them produces
-Ctrl, Shift, Cmd, and Option respectively. Magic `Q/W/E` controls RGB toggle,
+Ctrl, Shift, Cmd, and Option respectively. All thumb holds are strictly
+time-based (300 ms), so rolling over them while typing can never misfire a
+modifier. Magic `Q/W/E` controls RGB toggle,
 brightness down, and brightness up. See
-[`tomahawk56_cruiser_phase1_migration_plan.md`](tomahawk56_cruiser_phase1_migration_plan.md)
+[`docs/migration_plan.md`](docs/migration_plan.md)
 for all four diagrams and the exact Defy migration.
 
 ## Layer lighting

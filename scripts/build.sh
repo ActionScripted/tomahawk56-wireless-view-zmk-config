@@ -24,15 +24,18 @@ require_init() {
   west zephyr-export
 }
 
+# Board and shield combinations must match build.yaml (the CI matrix).
+BOARD="mikoto@7.3.0//zmk"
+
 build() {
-  local name="$1" board="$2" shield="$3" snippet="$4"
-  shift 4
+  local name="$1" shield="$2" snippet="$3"
+  shift 3
   echo "==> Building $name"
   if [ -n "$snippet" ]; then
-    west build -s zmk/app -d "build/$name" -b "$board" -S "$snippet" -- \
+    west build -s zmk/app -d "build/$name" -b "$BOARD" -S "$snippet" -- \
       -DZMK_CONFIG="$(pwd)/config" -DSHIELD="$shield" "$@"
   else
-    west build -s zmk/app -d "build/$name" -b "$board" -- \
+    west build -s zmk/app -d "build/$name" -b "$BOARD" -- \
       -DZMK_CONFIG="$(pwd)/config" -DSHIELD="$shield" "$@"
   fi
   mkdir -p artifacts
@@ -53,15 +56,15 @@ case "$cmd" in
     ;;
   left)
     require_init
-    build left mikoto@7.3.0//zmk "tomahawk56_left nice_view_adapter nice_view" studio-rpc-usb-uart -DCONFIG_ZMK_STUDIO=y
+    build left "tomahawk56_left nice_view_adapter nice_view" studio-rpc-usb-uart -DCONFIG_ZMK_STUDIO=y
     ;;
   right)
     require_init
-    build right mikoto@7.3.0//zmk "tomahawk56_right nice_view_adapter nice_view" ""
+    build right "tomahawk56_right nice_view_adapter nice_view" ""
     ;;
   reset)
     require_init
-    build reset mikoto@7.3.0//zmk settings_reset ""
+    build reset settings_reset ""
     ;;
   all)
     "$0" left

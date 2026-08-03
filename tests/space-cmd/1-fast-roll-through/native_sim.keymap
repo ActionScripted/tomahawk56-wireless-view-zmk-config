@@ -1,0 +1,11 @@
+#include "../behavior_keymap.dtsi"
+
+/* Fast roll: space down, A down, space up, A up. Must be "space a", never Cmd. */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,1,40)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_RELEASE(0,1,10)
+    >;
+};
