@@ -1,24 +1,19 @@
 #!/usr/bin/env python3
-"""Report what keymap the keyboard is ACTUALLY running, and diff it against the
-compiled one.
+"""Diff the keymap the keyboard is actually running against the compiled one.
 
-This exists because ZMK Studio's keymap storage silently outranks the firmware.
-`CONFIG_ZMK_STUDIO` selects `CONFIG_ZMK_KEYMAP_SETTINGS_STORAGE`, and on every
-boot `keymap_handle_set()` in zmk/app/src/keymap.c overwrites
-`zmk_keymap[layer][position]` with whatever was saved to the settings partition.
-Any position ever saved from Studio is pinned forever: rebuilding and reflashing
-cannot dislodge it, and nothing on the device or in the build output says so.
+ZMK Studio's keymap storage silently outranks the firmware: `keymap_handle_set()`
+in zmk/app/src/keymap.c reapplies saved bindings over `zmk_keymap` on every boot,
+so any position ever saved from Studio survives every rebuild and reflash, with
+nothing on the device or in the build output to say so.
 
-Talks to the left/central half over the ZMK Studio RPC UART that the
-`studio-rpc-usb-uart` snippet exposes when it is plugged in over USB. Reporting
-is read-only: the only request it sends is keymap.get_keymap.
+Talks to the left/central half over the Studio RPC UART that the
+`studio-rpc-usb-uart` snippet exposes over USB. Reporting is read-only - the only
+request sent is keymap.get_keymap.
 
-With --clear it additionally sends core.reset_settings, which runs the single
-registered reset handler, zmk_keymap_reset_settings(). That deletes the saved
-keymap bindings and reloads the stock (compiled) keymap. It does NOT touch
-Bluetooth pairings - unlike flashing reset.uf2, which wipes the whole settings
-partition. Afterwards it re-reads the keymap and reports whether the board now
-matches the build.
+--clear also sends core.reset_settings, whose one registered handler is
+zmk_keymap_reset_settings(): it drops the saved bindings and reloads the compiled
+keymap, leaving Bluetooth pairings alone (flashing reset.uf2 wipes those too). It
+then re-reads the keymap to confirm the board matches the build.
 
 Usage:  scripts/live-keymap.py [--clear] [/dev/cu.usbmodemXXXX]
 """

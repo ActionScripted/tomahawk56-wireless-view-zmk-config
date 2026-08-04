@@ -44,7 +44,7 @@ Runs via `mise` (`.mise.toml`); `lefthook` runs the same checks on `git commit` 
 
 - **[customkeymap.com](https://customkeymap.com/) (recommended)**: web-based ZMK keymap visualizer/editor. Point it at this repo (owner/repo or a direct `.keymap` link), click keys to change bindings/layers/behaviors/combos, and commit straight back to GitHub — or export SVG/PNG or a `.keymap` file. No install required.
 - [keymap-editor](https://nickcoutsos.github.io/keymap-editor/): web app, GitHub OAuth, commits straight to this repo.
-- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half, studio-rpc enabled). **Saving in Studio does not write back to this repo — it writes to the board's settings flash, and those bindings then override the compiled keymap on every boot, permanently.** Reflashing does not undo it. Studio is locked by default; tap Magic + top-left corner (`&studio_unlock`) to unlock. See Diagnostics below.
+- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half, studio-rpc enabled). **Saving writes to the board's settings flash, not to this repo, and those bindings then override the compiled keymap on every boot** — reflashing does not undo it (see Diagnostics). Locked by default; unlock with Magic + top-left corner (`&studio_unlock`).
 - Directly: `config/tomahawk56.keymap` (ASCII layer diagrams in comments)
 
 ## Diagnostics
@@ -57,26 +57,22 @@ by a past ZMK Studio save. Plug the **left** half in over USB and ask it:
 make live-keymap
 ```
 
-It reads the running keymap over the Studio RPC UART (read-only) and diffs it
-against `build/left/zephyr/zephyr.dts`, listing every position where the board
-disagrees with the firmware you built. To clear pinned bindings:
+It reads the running keymap (read-only) and lists every position where the board
+disagrees with `build/left/zephyr/zephyr.dts`. To clear pinned bindings:
 
 ```sh
-make clear-pinned-keymap   # deletes the saved keymap; keeps Bluetooth pairings
+make clear-pinned-keymap   # drops the saved keymap; keeps Bluetooth pairings
 ```
 
-That sends `core.reset_settings`, whose only registered handler is
-`zmk_keymap_reset_settings()`, then re-reads the keymap to confirm the board
-matches the build. `make flash-reset` also works but wipes the whole settings
-partition, so you have to re-pair Bluetooth afterwards.
+`make flash-reset` does the same but wipes the whole settings partition, so it
+forces re-pairing.
 
-Why this is possible: `CONFIG_ZMK_STUDIO` selects
+Why this happens: `CONFIG_ZMK_STUDIO` selects
 `CONFIG_ZMK_KEYMAP_SETTINGS_STORAGE`, and `keymap_handle_set()` in
 `zmk/app/src/keymap.c` reapplies saved bindings over the compiled keymap at every
-boot. Nothing in the build output or on the device reports it. Saved bindings
-also store a behavior *local ID*, which is assigned at build time — so after an
-unrelated rebuild a pinned binding can resolve to a different behavior than the
-one that was saved.
+boot. Saved bindings store a behavior *local ID* assigned at build time, so after
+an unrelated rebuild a pinned binding can even resolve to a different behavior
+than the one saved.
 
 ## Runtime key bindings
 
