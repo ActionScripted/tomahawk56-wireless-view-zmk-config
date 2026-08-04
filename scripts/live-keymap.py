@@ -8,7 +8,9 @@ nothing on the device or in the build output to say so.
 
 Talks to the left/central half over the Studio RPC UART that the
 `studio-rpc-usb-uart` snippet exposes over USB. Reporting is read-only - the only
-request sent is keymap.get_keymap.
+request sent is keymap.get_keymap. Positions are compared by parameters, not by
+behavior, so two parameterless behaviors (&none vs &studio_unlock, say) look
+alike; that is fine for catching pinned bindings, which always carry parameters.
 
 --clear also sends core.reset_settings, whose one registered handler is
 zmk_keymap_reset_settings(): it drops the saved bindings and reloads the compiled

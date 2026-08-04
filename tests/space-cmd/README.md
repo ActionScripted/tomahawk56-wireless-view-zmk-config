@@ -1,7 +1,7 @@
 # Space/Cmd behavior tests
 
 Regression tests for `safe_space_mt` (`config/tomahawk56.keymap`): Space on
-tap, Cmd only by holding past the 450 ms tapping term. They pin the property
+tap, Cmd only by holding past the 225 ms tapping term. They pin the property
 that fast typing can never misfire Cmd.
 
 Run them with `make test`. Each case uses ZMK's snapshot test format
@@ -17,5 +17,5 @@ diff fails the case. `behavior_keymap.dtsi` here must mirror the
 | 2-fast-roll-nested | A tapped fully inside a space press | "space a", no Cmd |
 | 3-typing-streak-long-press | space pressed 60 ms after a tap, held 600 ms | instant Space, no Cmd |
 | 4-deliberate-cmd-chord | space held alone 600 ms, then A | Cmd+A chord |
-| 5-tap-then-hold-repeat | tap space, re-press within 175 ms, hold | Space auto-repeat |
-| 6-lazy-overlap-roll | thumb rests on space ~350 ms while A is rolled | "space a", no Cmd |
+| 5-tap-then-hold-repeat | tap space, re-press 60 ms later, hold | Space auto-repeat |
+| 6-lazy-overlap-roll | thumb rests on space ~150 ms while A is rolled | "space a", no Cmd |

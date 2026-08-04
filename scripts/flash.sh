@@ -1,8 +1,9 @@
 #!/usr/bin/env bash
 # Copies a built .uf2 onto a connected UF2 bootloader drive. Bootloader mode is
-# entered with a key press, not a physical button: config/tomahawk56.keymap's
-# Base layer binds &bootloader directly to the top-left and top-right corner
-# positions. On the split right half, that key press is handled through the
+# entered with a key press, not a physical button: squeeze either half's two
+# lower outer keys together to turn the Settings layer on, then tap that half's
+# top outer corner, which is where config/tomahawk56.keymap binds &bootloader.
+# Nothing on Base reboots the board. Combos and layers are resolved on the
 # left/central half, so both halves must be on when using the in-keymap
 # bootloader shortcut. This replicates Zephyr's own
 # `west flash` uf2 runner (scripts/west_commands/runners/uf2.py): it looks for
@@ -177,7 +178,7 @@ This is a known macOS bug (FSKit's msdos module vs. the UF2 bootloader's
 virtual FAT volume), not a problem with the board. Things to try, in order:
 
   1. Unplug the board, then plug it back in and re-enter bootloader mode
-     (double-tap reset, or tap the Base-layer corner key).
+     (double-tap reset, or Settings squeeze + that half's top outer corner).
   2. Try a different USB port or cable.
   3. Reboot your Mac, then flash again before mounting any other USB drives.
   4. Flash from another machine (Linux/Windows mount these drives fine).
@@ -193,9 +194,9 @@ flash_one() {
   }
 
   case "$target" in
-    left) echo "Connect the left half via USB-C, then tap the top-left Base corner." ;;
-    right) echo "Connect the right half via USB-C, keep both halves powered on, then tap the top-right Base corner." ;;
-    reset) echo "Connect the half you want to reset via USB-C, then use that half's top Base corner to enter its bootloader." ;;
+    left) echo "Connect the left half via USB-C, squeeze the two lower outer keys for Settings, then tap the top-left corner (red)." ;;
+    right) echo "Connect the right half via USB-C, keep both halves powered on, squeeze the two lower outer keys for Settings, then tap the top-right corner (red)." ;;
+    reset) echo "Connect the half you want to reset via USB-C, squeeze that half's two lower outer keys for Settings, then tap its top outer corner (red)." ;;
   esac
   echo "Waiting up to 60s for it to mount as a UF2 bootloader drive under /Volumes ..."
 
@@ -225,6 +226,11 @@ flash_one() {
   done
 
   echo "==> $target done."
+  # The image clears the saved Studio keymap on its first boot (see
+  # CONFIG_TOMAHAWK56_STUDIO_RESET_ON_FLASH); only the central half stores one.
+  [ "$target" = "left" ] &&
+    echo "    Its first boot drops any keymap saved from ZMK Studio. Bluetooth pairings are kept."
+  return 0
 }
 
 target="${1:-}"

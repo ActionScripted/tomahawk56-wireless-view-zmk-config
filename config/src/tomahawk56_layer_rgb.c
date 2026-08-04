@@ -16,6 +16,8 @@
 #include <zmk/event_manager.h>
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 #include <zephyr/bluetooth/conn.h>
+#include <zmk/ble.h>
+#include <zmk/events/ble_active_profile_changed.h>
 #include <zmk/events/layer_state_changed.h>
 #include <zmk/keymap.h>
 #include <zmk/split/central.h>
@@ -42,6 +44,13 @@
  *                &rgb_ug. Must match the LRGB() macro in tomahawk56.keymap.
  */
 #define LRGB_CONTROL_BASE 0x100
+
+/* Keep in sync with L_SET in tomahawk56.keymap. The Settings layer is the only
+ * one whose map is not purely static: the Bluetooth profile row reports which
+ * profile is selected. */
+#define LRGB_SETTINGS_LAYER 4
+#define LRGB_BT_ROW 2
+#define LRGB_BT_FIRST_COL 1
 
 #ifndef ZMK_RGB_UNDERGLOW_STATUS_CHANNEL_LAYER
 #define ZMK_RGB_UNDERGLOW_STATUS_CHANNEL_LAYER 1
@@ -108,7 +117,19 @@ static const uint8_t magic_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
     {COLOR_OFF, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_OFF, COLOR_OFF},
     {COLOR_OFF, COLOR_RED, COLOR_ORANGE, COLOR_YELLOW, COLOR_GREEN, COLOR_OFF},
-    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_GREEN},
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
+};
+
+/*
+ * Settings reads as its own instrument panel: red is the only thing that
+ * reflashes, orange reboots, blue is Bluetooth, magenta forgets a pairing,
+ * white is the way out (the entry pair and every thumb).
+ */
+static const uint8_t settings_main[MAIN_ROWS][MAIN_COLS] = {
+    {COLOR_RED, COLOR_ORANGE, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
+    {COLOR_PURPLE, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_OFF, COLOR_OFF},
+    {COLOR_WHITE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE},
+    {COLOR_WHITE, COLOR_MAGENTA, COLOR_RED, COLOR_OFF, COLOR_OFF, COLOR_OFF},
 };
 
 /* Thumb LEDs are chained from Opt/Enter back toward Ctrl/Tab. */
@@ -143,10 +164,23 @@ static const uint8_t magic_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_GREEN, COLOR_OFF},
 };
 
+/* The right half carries output routing and the status indicators, plus its own
+ * reboot pair on the outer corner. See the left-half map above for the scheme. */
+static const uint8_t settings_main[MAIN_ROWS][MAIN_COLS] = {
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_ORANGE, COLOR_RED},
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
+    {COLOR_GREEN, COLOR_TEAL, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_WHITE},
+    {COLOR_LIME, COLOR_LIGHT_BLUE, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_WHITE},
+};
+
 /* The mirrored right thumb LED chain runs from Ctrl/Tab toward Opt/Enter. */
 static const uint8_t base_thumbs[THUMB_COUNT] = {
     COLOR_BLUE, COLOR_ORANGE, COLOR_WHITE, COLOR_GREEN};
 #endif
+
+/* In Settings every thumb is the same key: leave. */
+static const uint8_t settings_thumbs[THUMB_COUNT] = {
+    COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE};
 
 /* Indexed by keymap layer number (see the L_* defines in tomahawk56.keymap).
  * Thumbs keep their Base role colors on every layer. */
@@ -155,7 +189,21 @@ static const uint8_t (*const main_maps[])[MAIN_COLS] = {
     symbols_main,
     functional_main,
     magic_main,
+    settings_main,
 };
+
+static const uint8_t *const thumb_maps[] = {
+    base_thumbs,
+    base_thumbs,
+    base_thumbs,
+    base_thumbs,
+    settings_thumbs,
+};
+
+BUILD_ASSERT(ARRAY_SIZE(thumb_maps) == ARRAY_SIZE(main_maps),
+             "every layer needs both a main and a thumb color map");
+BUILD_ASSERT(LRGB_SETTINGS_LAYER < ARRAY_SIZE(main_maps),
+             "LRGB_SETTINGS_LAYER must match L_SET in tomahawk56.keymap");
 
 /* Physical LED index for each visually left-to-right main-key position. */
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
@@ -202,8 +250,33 @@ static const uint8_t (*main_map_for_layer(uint8_t layer))[MAIN_COLS] {
     return layer < ARRAY_SIZE(main_maps) ? main_maps[layer] : main_maps[0];
 }
 
+static const uint8_t *thumb_map_for_layer(uint8_t layer) {
+    return layer < ARRAY_SIZE(thumb_maps) ? thumb_maps[layer] : thumb_maps[0];
+}
+
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+/*
+ * The five Bluetooth profile keys sit on the central's home row, so the central
+ * can report their state without extending the split sync payload: the selected
+ * profile turns green once its host is connected, white while it is still
+ * advertising. The other four stay blue.
+ */
+static void mark_active_bt_profile(void) {
+    int active = zmk_ble_active_profile_index();
+    if (active < 0 || LRGB_BT_FIRST_COL + active >= MAIN_COLS) {
+        return;
+    }
+
+    uint8_t col = LRGB_BT_FIRST_COL + active;
+
+    colors[main_pixels[LRGB_BT_ROW][col]] =
+        palette[zmk_ble_active_profile_is_connected() ? COLOR_GREEN : COLOR_WHITE];
+}
+#endif
+
 static int render_layer(uint8_t layer, uint8_t brightness) {
     const uint8_t (*main_map)[MAIN_COLS] = main_map_for_layer(layer);
+    const uint8_t *thumb_map = thumb_map_for_layer(layer);
 
     for (uint8_t i = 0; i < LED_COUNT; i++) {
         colors[i] = palette[COLOR_OFF];
@@ -215,8 +288,14 @@ static int render_layer(uint8_t layer, uint8_t brightness) {
         }
     }
 
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    if (layer == LRGB_SETTINGS_LAYER) {
+        mark_active_bt_profile();
+    }
+#endif
+
     for (uint8_t thumb = 0; thumb < THUMB_COUNT; thumb++) {
-        colors[MAIN_KEY_COUNT + thumb] = palette[base_thumbs[thumb]];
+        colors[MAIN_KEY_COUNT + thumb] = palette[thumb_map[thumb]];
     }
 
     for (uint8_t i = 0; i < LED_COUNT; i++) {
@@ -371,6 +450,25 @@ static int layer_rgb_listener(const zmk_event_t *event) {
 ZMK_LISTENER(tomahawk56_layer_rgb, layer_rgb_listener);
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 ZMK_SUBSCRIPTION(tomahawk56_layer_rgb, zmk_layer_state_changed);
+
+/*
+ * Profile selection and the active profile's connect/disconnect both raise this.
+ * Only the Settings layer draws that state, and only on the central's own LEDs,
+ * so nothing is invalidated or synced anywhere else.
+ */
+static int layer_rgb_ble_listener(const zmk_event_t *event) {
+    ARG_UNUSED(event);
+    if (zmk_keymap_highest_layer_active() != LRGB_SETTINGS_LAYER) {
+        return 0;
+    }
+
+    last_layer = UINT8_MAX;
+    layer_rgb_schedule(K_NO_WAIT);
+    return 0;
+}
+
+ZMK_LISTENER(tomahawk56_layer_rgb_ble, layer_rgb_ble_listener);
+ZMK_SUBSCRIPTION(tomahawk56_layer_rgb_ble, zmk_ble_active_profile_changed);
 #endif
 
 static int layer_rgb_control_convert(struct zmk_behavior_binding *binding,
