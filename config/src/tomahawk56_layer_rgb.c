@@ -17,7 +17,9 @@
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 #include <zephyr/bluetooth/conn.h>
 #include <zmk/ble.h>
+#include <zmk/endpoints.h>
 #include <zmk/events/ble_active_profile_changed.h>
+#include <zmk/events/endpoint_changed.h>
 #include <zmk/events/layer_state_changed.h>
 #include <zmk/keymap.h>
 #include <zmk/split/central.h>
@@ -42,15 +44,25 @@
  *                Sent from the work handler below; never bound in the keymap.
  *   0x100-0x1FF  RGB underglow control command (RGB_TOG etc.), forwarded to
  *                &rgb_ug. Must match the LRGB() macro in tomahawk56.keymap.
+ *   0x200-0x2FF  output selection command (OUT_USB etc.), forwarded to &out on
+ *                the central. Must match the LOUT() macro in tomahawk56.keymap.
  */
 #define LRGB_CONTROL_BASE 0x100
+#define LRGB_OUTPUT_BASE 0x200
 
 /* Keep in sync with L_SET in tomahawk56.keymap. The Settings layer is the only
  * one whose map is not purely static: the Bluetooth profile row reports which
- * profile is selected. */
+ * profile is selected. The four &bt BT_SEL keys are the number row's cols 1-4;
+ * col 5 is BT_CLR_ALL and must never be recolored as a profile. */
 #define LRGB_SETTINGS_LAYER 4
-#define LRGB_BT_ROW 2
+#define LRGB_BT_ROW 0
 #define LRGB_BT_FIRST_COL 1
+#define LRGB_BT_PROFILE_COUNT 4
+
+/* The USB/BLE pair on the second row; the selected one is repainted purple. */
+#define LRGB_OUT_ROW 1
+#define LRGB_OUT_USB_COL 1
+#define LRGB_OUT_BLE_COL 2
 
 #ifndef ZMK_RGB_UNDERGLOW_STATUS_CHANNEL_LAYER
 #define ZMK_RGB_UNDERGLOW_STATUS_CHANNEL_LAYER 1
@@ -121,20 +133,22 @@ static const uint8_t magic_main[MAIN_ROWS][MAIN_COLS] = {
 };
 
 /*
- * Settings reads as its own instrument panel: red is the only thing that
- * reflashes, orange reboots, blue is Bluetooth, magenta forgets a pairing,
- * white is the way out (the entry pair and every thumb).
+ * Settings reads as its own instrument panel: red is irreversible (the
+ * bootloader corner, and the V+B pair that forgets every pairing), blue is
+ * Bluetooth, white is the way out (the entry pair and every thumb).
  */
 static const uint8_t settings_main[MAIN_ROWS][MAIN_COLS] = {
-    {COLOR_RED, COLOR_ORANGE, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
-    {COLOR_PURPLE, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_OFF, COLOR_OFF},
-    {COLOR_WHITE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE},
-    {COLOR_WHITE, COLOR_MAGENTA, COLOR_RED, COLOR_OFF, COLOR_OFF, COLOR_OFF},
+    {COLOR_RED, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_RED},
+    /* Unlock is orange, not purple: purple is reserved for the selected output,
+     * which lands on the adjacent key whenever USB is the one chosen. */
+    {COLOR_ORANGE, COLOR_TEAL, COLOR_LIGHT_BLUE, COLOR_OFF, COLOR_OFF, COLOR_OFF},
+    {COLOR_WHITE, COLOR_OFF, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_OFF},
+    {COLOR_WHITE, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_GREEN},
 };
 
 /* Thumb LEDs are chained from Opt/Enter back toward Ctrl/Tab. */
 static const uint8_t base_thumbs[THUMB_COUNT] = {
-    COLOR_GREEN, COLOR_WHITE, COLOR_ORANGE, COLOR_BLUE};
+    COLOR_GREEN, COLOR_MAGENTA, COLOR_ORANGE, COLOR_BLUE};
 #else
 static const uint8_t base_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_OFF},
@@ -164,18 +178,19 @@ static const uint8_t magic_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_GREEN, COLOR_OFF},
 };
 
-/* The right half carries output routing and the status indicators, plus its own
- * reboot pair on the outer corner. See the left-half map above for the scheme. */
+/* Settings is a left-handed panel. The right half keeps only its own bootloader
+ * corner and the white pair that toggles the layer; every other key is dark and
+ * dead, so the right hand's whole job here is leaving. */
 static const uint8_t settings_main[MAIN_ROWS][MAIN_COLS] = {
-    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_ORANGE, COLOR_RED},
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_RED},
     {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
-    {COLOR_GREEN, COLOR_TEAL, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_WHITE},
-    {COLOR_LIME, COLOR_LIGHT_BLUE, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_WHITE},
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_WHITE},
+    {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_WHITE},
 };
 
 /* The mirrored right thumb LED chain runs from Ctrl/Tab toward Opt/Enter. */
 static const uint8_t base_thumbs[THUMB_COUNT] = {
-    COLOR_BLUE, COLOR_ORANGE, COLOR_WHITE, COLOR_GREEN};
+    COLOR_BLUE, COLOR_ORANGE, COLOR_MAGENTA, COLOR_GREEN};
 #endif
 
 /* In Settings every thumb is the same key: leave. */
@@ -215,8 +230,14 @@ static const uint8_t main_pixels[MAIN_ROWS][MAIN_COLS] = {
 };
 #else
 static const uint8_t main_pixels[MAIN_ROWS][MAIN_COLS] = {
-    /* The top-row LED chain begins at OUTER, then continues from 6 through 0. */
-    {1, 2, 3, 4, 5, 0},
+    /*
+     * The top-row LED chain begins at OUTER, then runs inward from 0 to 6 - the
+     * same shape as the left half's top row, not the reverse. Read off the board
+     * by painting the row six distinct colors; every layer had colored this row
+     * uniformly, so the old reversed order never showed. The connectivity pixel
+     * (index 1, config/tomahawk56_right.conf) lands on "0", which matches.
+     */
+    {5, 4, 3, 2, 1, 0},
     {6, 7, 8, 9, 10, 11},
     {17, 16, 15, 14, 13, 12},
     {18, 19, 20, 21, 22, 23},
@@ -263,14 +284,30 @@ static const uint8_t *thumb_map_for_layer(uint8_t layer) {
  */
 static void mark_active_bt_profile(void) {
     int active = zmk_ble_active_profile_index();
-    if (active < 0 || LRGB_BT_FIRST_COL + active >= MAIN_COLS) {
+    if (active < 0 || active >= LRGB_BT_PROFILE_COUNT) {
         return;
     }
 
     uint8_t col = LRGB_BT_FIRST_COL + active;
+    BUILD_ASSERT(LRGB_BT_FIRST_COL + LRGB_BT_PROFILE_COUNT <= MAIN_COLS,
+                 "the profile keys must fit the row without reaching BT_CLR_ALL");
 
     colors[main_pixels[LRGB_BT_ROW][col]] =
         palette[zmk_ble_active_profile_is_connected() ? COLOR_GREEN : COLOR_WHITE];
+}
+
+/*
+ * The selected output turns purple; the other keeps its resting color. This
+ * follows the *preferred* transport, not the one currently carrying traffic, so
+ * the key reports what you chose even when that transport is unavailable -
+ * picking USB while unplugged still moves the light.
+ */
+static void mark_active_output(void) {
+    uint8_t col = (zmk_endpoint_get_preferred_transport() == ZMK_TRANSPORT_USB)
+                      ? LRGB_OUT_USB_COL
+                      : LRGB_OUT_BLE_COL;
+
+    colors[main_pixels[LRGB_OUT_ROW][col]] = palette[COLOR_PURPLE];
 }
 #endif
 
@@ -291,6 +328,7 @@ static int render_layer(uint8_t layer, uint8_t brightness) {
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     if (layer == LRGB_SETTINGS_LAYER) {
         mark_active_bt_profile();
+        mark_active_output();
     }
 #endif
 
@@ -469,13 +507,17 @@ static int layer_rgb_ble_listener(const zmk_event_t *event) {
 
 ZMK_LISTENER(tomahawk56_layer_rgb_ble, layer_rgb_ble_listener);
 ZMK_SUBSCRIPTION(tomahawk56_layer_rgb_ble, zmk_ble_active_profile_changed);
+/* Catches the output moving on its own - USB unplugged, a fallback - rather
+ * than by a key press, which repaints itself in layer_rgb_sync_pressed(). */
+ZMK_SUBSCRIPTION(tomahawk56_layer_rgb_ble, zmk_endpoint_changed);
 #endif
 
 static int layer_rgb_control_convert(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
     /* Only keymap-bound control commands need relative-to-absolute conversion;
-     * the state sync range is built and sent by the work handler directly. */
-    if (binding->param1 < LRGB_CONTROL_BASE) {
+     * the state sync range is built and sent by the work handler directly, and
+     * the output commands are already absolute. */
+    if (binding->param1 < LRGB_CONTROL_BASE || binding->param1 >= LRGB_OUTPUT_BASE) {
         return 0;
     }
 
@@ -494,6 +536,31 @@ static int layer_rgb_control_convert(struct zmk_behavior_binding *binding,
 
 static int layer_rgb_sync_pressed(struct zmk_behavior_binding *binding,
                                   struct zmk_behavior_binding_event event) {
+    if (binding->param1 >= LRGB_OUTPUT_BASE) {
+        /*
+         * &out is central-only, and so is the key that shows which output is
+         * chosen; the peripheral is reached because this behavior is global,
+         * and has nothing to do with the payload.
+         */
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+        struct zmk_behavior_binding output = {
+            .behavior_dev = DEVICE_DT_NAME(DT_NODELABEL(out)),
+            .param1 = binding->param1 - LRGB_OUTPUT_BASE,
+            .param2 = binding->param2,
+        };
+        int err = behavior_keymap_binding_pressed(&output, event);
+        if (err < 0) {
+            return err;
+        }
+
+        last_layer = UINT8_MAX;
+        layer_rgb_schedule(K_NO_WAIT);
+#else
+        ARG_UNUSED(event);
+#endif
+        return ZMK_BEHAVIOR_OPAQUE;
+    }
+
     if (binding->param1 >= LRGB_CONTROL_BASE) {
         struct zmk_behavior_binding underglow = {
             .behavior_dev = DEVICE_DT_NAME(DT_NODELABEL(rgb_ug)),

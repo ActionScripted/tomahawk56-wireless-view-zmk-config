@@ -17,9 +17,14 @@
 #define L_MAGIC 3
 #define L_SET   4
 
-/* RGB control routed through lrgb_sync; 0x100 marks the command range
- * (see the param1 encoding in config/src/tomahawk56_layer_rgb.c). */
+/* RGB and output control routed through lrgb_sync; 0x100 and 0x200 mark the
+ * two command ranges (see the param1 encoding in
+ * config/src/tomahawk56_layer_rgb.c). Output goes through the wrapper rather
+ * than binding &out directly so the press itself repaints the active-output
+ * key: ZMK only raises zmk_endpoint_changed when the *selected* endpoint moves,
+ * so choosing USB while unplugged would otherwise light nothing. */
 #define LRGB(cmd) &lrgb_sync (0x100 + (cmd)) 0
+#define LOUT(cmd) &lrgb_sync (0x200 + (cmd)) 0
 
 nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 
@@ -67,7 +72,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <225>;
+            tapping-term-ms = <175>;
             quick-tap-ms = <125>;
             bindings = <&kp>, <&kp>;
         };
@@ -160,16 +165,6 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             layers = <L_BASE L_SET>;
         };
 
-        /*
-         * Forgetting every host pairing is a two-key chord rather than a key:
-         * it is unrecoverable, and Z alone already clears the selected profile.
-         */
-        bt_clear_all {
-            timeout-ms = <100>;
-            key-positions = <37 38>; /* Z + X */
-            bindings = <&bt BT_CLR_ALL>;
-            layers = <L_SET>;
-        };
     };
 
     keymap {
@@ -257,27 +252,41 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
          * is &none, not &trans - while the mode is on the board types nothing,
          * so a stray key press cannot do damage, and the RGB map is the legend.
          *
-         * &bootloader and &sys_reset are event-source local: each half's own
-         * keys reboot that half. &ind_bat and &ind_con are global-locality, so
-         * pressing them blocks on a split send - fine here, never on Base.
+         * &bootloader is event-source local: each half's own key reflashes that
+         * half. &ind_bat and &ind_con are global-locality, so pressing them
+         * blocks on a split send - fine here, never on Base.
+         *
+         * No soft reboot key: the power switch on each half already does that.
          */
         settings_layer {
             display-name = "Settings";
 // ----------------------------------------------------------------------------------------------------------------
-// | BOOT | RESET | NONE | NONE | NONE | NONE |     | NONE | NONE | NONE | NONE | RESET | BOOT |
-// |UNLCK | RGB   | BRI- | BRI+ | NONE | NONE |     | NONE | NONE | NONE | NONE | NONE  | NONE |
-// | SET  | BT1   | BT2  | BT3  | BT4  | BT5  |     | USB  | BLE  | NONE | NONE | NONE  | SET  |
-// | SET  | BTCLR | ALL* | NONE | NONE | NONE |     | BATT | CONN | NONE | NONE | NONE  | SET  |
+// | BOOT | BT1   | BT2  | BT3  | BT4  | CLR* |     | NONE | NONE | NONE | NONE | NONE  | BOOT |
+// |UNLCK | USB   | BLE  | NONE | NONE | NONE |     | NONE | NONE | NONE | NONE | NONE  | NONE |
+// | SET  | NONE  | RGB  | BRI- | BRI+ | NONE |     | NONE | NONE | NONE | NONE | NONE  | SET  |
+// | SET  | NONE  | NONE | NONE | NONE | BATT |     | NONE | NONE | NONE | NONE | NONE  | SET  |
 //               |EXIT |EXIT |EXIT |EXIT |            |EXIT |EXIT |EXIT |EXIT |
 //
-// * BTCLR + ALL together clear every host pairing (bt_clear_all combo).
-// RGB sits on the same Q/W/E positions as on Magic. Magic is the quick hold for
-// a one-off nudge; here the mode is latched, so brightness is repeated taps.
+// * CLR is &bt BT_CLR_ALL: forgets all four pairings at once, the only forget
+//   there is. Red, like the bootloader corner at the other end of the row.
+//
+// The profile keys sit on the number row because the rgbled-widget hunts down
+// &bt BT_SEL bindings and puts its own connect/advertise indicator on them,
+// using a position-to-pixel formula that only agrees with our LED map on this
+// row (see main_pixels in tomahawk56_layer_rgb.c). On the home row its light
+// landed on the mirrored key.
+//
+// Everything else groups by how the key gets used, not by what it is called:
+// USB/BLE sit under the Bluetooth row they belong with and light purple on the
+// active one; RGB drops to the home row so a slip while walking brightness
+// cannot land on a profile switch and drop the connection; battery keeps its
+// mnemonic on B. The whole panel is left-handed - the right half is bootloader
+// and the way out, nothing else.
             bindings = <
-&bootloader     &sys_reset         &none              &none              &none         &none         &none         &none         &none  &none  &sys_reset  &bootloader
-&studio_unlock  LRGB(RGB_TOG_CMD)  LRGB(RGB_BRD_CMD)  LRGB(RGB_BRI_CMD)  &none         &none         &none         &none         &none  &none  &none       &none
-&none           &bt BT_SEL 0       &bt BT_SEL 1       &bt BT_SEL 2       &bt BT_SEL 3  &bt BT_SEL 4  &out OUT_USB  &out OUT_BLE  &none  &none  &none       &none
-&none           &bt BT_CLR         &none              &none              &none         &none         &ind_bat      &ind_con      &none  &none  &none       &none
+&bootloader     &bt BT_SEL 0   &bt BT_SEL 1       &bt BT_SEL 2       &bt BT_SEL 3       &bt BT_CLR_ALL  &none  &none  &none  &none  &none  &bootloader
+&studio_unlock  LOUT(OUT_USB)  LOUT(OUT_BLE)      &none              &none              &none           &none  &none  &none  &none  &none  &none
+&none           &none          LRGB(RGB_TOG_CMD)  LRGB(RGB_BRD_CMD)  LRGB(RGB_BRI_CMD)  &none           &none  &none  &none  &none  &none  &none
+&none           &none          &none              &none              &none              &ind_bat        &none  &none  &none  &none  &none  &none
                        &to L_BASE  &to L_BASE  &to L_BASE  &to L_BASE        &to L_BASE  &to L_BASE  &to L_BASE  &to L_BASE
             >;
         };
