@@ -44,8 +44,39 @@ Runs via `mise` (`.mise.toml`); `lefthook` runs the same checks on `git commit` 
 
 - **[customkeymap.com](https://customkeymap.com/) (recommended)**: web-based ZMK keymap visualizer/editor. Point it at this repo (owner/repo or a direct `.keymap` link), click keys to change bindings/layers/behaviors/combos, and commit straight back to GitHub — or export SVG/PNG or a `.keymap` file. No install required.
 - [keymap-editor](https://nickcoutsos.github.io/keymap-editor/): web app, GitHub OAuth, commits straight to this repo.
-- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half, studio-rpc enabled). Doesn't write back to the file.
+- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half, studio-rpc enabled). **Saving in Studio does not write back to this repo — it writes to the board's settings flash, and those bindings then override the compiled keymap on every boot, permanently.** Reflashing does not undo it. Studio is locked by default; tap Magic + top-left corner (`&studio_unlock`) to unlock. See Diagnostics below.
 - Directly: `config/tomahawk56.keymap` (ASCII layer diagrams in comments)
+
+## Diagnostics
+
+If the keyboard behaves differently from `config/tomahawk56.keymap` even after a
+clean build and flash, it is probably running bindings pinned in settings flash
+by a past ZMK Studio save. Plug the **left** half in over USB and ask it:
+
+```sh
+make live-keymap
+```
+
+It reads the running keymap over the Studio RPC UART (read-only) and diffs it
+against `build/left/zephyr/zephyr.dts`, listing every position where the board
+disagrees with the firmware you built. To clear pinned bindings:
+
+```sh
+make clear-pinned-keymap   # deletes the saved keymap; keeps Bluetooth pairings
+```
+
+That sends `core.reset_settings`, whose only registered handler is
+`zmk_keymap_reset_settings()`, then re-reads the keymap to confirm the board
+matches the build. `make flash-reset` also works but wipes the whole settings
+partition, so you have to re-pair Bluetooth afterwards.
+
+Why this is possible: `CONFIG_ZMK_STUDIO` selects
+`CONFIG_ZMK_KEYMAP_SETTINGS_STORAGE`, and `keymap_handle_set()` in
+`zmk/app/src/keymap.c` reapplies saved bindings over the compiled keymap at every
+boot. Nothing in the build output or on the device reports it. Saved bindings
+also store a behavior *local ID*, which is assigned at build time — so after an
+unrelated rebuild a pinned binding can resolve to a different behavior than the
+one that was saved.
 
 ## Runtime key bindings
 
@@ -55,17 +86,19 @@ four layers:
 - Hold `F` or `J` for Symbols.
 - Hold `D` or `K` for Functional.
 - Hold `S` or `L` for Magic.
-- Chord `D+F` or `J+K` on Base for Escape with one hand.
+- Chord `C+V` or `M+,` on Base for Escape with one hand.
 - Tap the Base key below the top-left bootloader corner to reboot with
   `&sys_reset`; it does not erase settings.
 - On an active layer, tap either Space/Cmd thumb to lock or unlock that layer;
   hold it for Cmd.
 - Tap the top-left or top-right Base corner to enter that half's bootloader.
 
-The mirrored thumbs tap Tab, Backspace, Space, and Enter; holding them produces
-Ctrl, Shift, Cmd, and Option respectively. All thumb holds are strictly
-time-based (300 ms), so rolling over them while typing can never misfire a
-modifier. Magic `Q/W/E` controls RGB toggle,
+The thumbs tap Tab, Backspace, Space, and Enter; holding them produces Ctrl,
+Shift, Cmd, and Option respectively. The right Space thumb is the exception: it
+is a plain Space key with no hold behavior, so it auto-repeats when held — the
+left Space thumb carries the Cmd hold. All thumb holds are strictly time-based
+(450 ms), so rolling over them while typing can never misfire a modifier. Magic
+`Q/W/E` controls RGB toggle,
 brightness down, and brightness up. See
 [`docs/migration_plan.md`](docs/migration_plan.md)
 for all four diagrams and the exact Defy migration.

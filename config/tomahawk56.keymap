@@ -35,6 +35,10 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         /*
          * Strictly time-based layer holds. A recent key press forces an immediate tap,
          * so neither same-hand nor cross-hand typing rolls can activate a layer.
+         *
+         * The hold must stay plain &mo. &lrgb_sync is global-locality, so using it
+         * here put a blocking split BLE send on the key-press path. RGB follows the
+         * layer via the zmk_layer_state_changed listener instead.
          */
         layer_tap: layer_tap {
             compatible = "zmk,behavior-hold-tap";
@@ -42,7 +46,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             flavor = "tap-preferred";
             tapping-term-ms = <200>;
             require-prior-idle-ms = <250>;
-            bindings = <&lrgb_sync>, <&kp>;
+            bindings = <&mo>, <&kp>;
         };
 
         /* Active-layer interruptions cannot force Cmd. */
@@ -50,7 +54,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <300>;
+            tapping-term-ms = <450>;
             quick-tap-ms = <175>;
             bindings = <&kp>, <&tog>;
         };
@@ -60,22 +64,24 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <300>;
+            tapping-term-ms = <450>;
             quick-tap-ms = <175>;
             bindings = <&kp>, <&kp>;
         };
 
         /*
          * Cmd only by holding past the tapping term; interrupting keys never
-         * force the modifier, so typing rolls always resolve as Space.
+         * force the modifier, so typing rolls always resolve as Space. The
+         * term is deliberately long: a thumb lazily resting on Space while
+         * the next word is typed must stay below it.
          */
         safe_space_mt: safe_space_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "tap-preferred";
-            tapping-term-ms = <300>;
+            tapping-term-ms = <450>;
             quick-tap-ms = <175>;
-            require-prior-idle-ms = <125>;
+            require-prior-idle-ms = <150>;
             bindings = <&kp>, <&kp>;
         };
     };
@@ -109,11 +115,14 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
     combos {
         compatible = "zmk,combos";
 
-        /* Mirrored upper-alpha Escape chords, isolated from all layer hold-taps. */
+        /*
+         * Mirrored bottom-row Escape chords on pairs that almost never roll in
+         * prose, isolated from all layer hold-taps.
+         */
         escape_left {
             timeout-ms = <35>;
             require-prior-idle-ms = <100>;
-            key-positions = <15 16>; /* E + R */
+            key-positions = <39 40>; /* C + V */
             bindings = <&kp ESC>;
             layers = <L_BASE>;
         };
@@ -121,7 +130,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         escape_right {
             timeout-ms = <35>;
             require-prior-idle-ms = <100>;
-            key-positions = <19 20>; /* U + I */
+            key-positions = <43 44>; /* M + , */
             bindings = <&kp ESC>;
             layers = <L_BASE>;
         };
@@ -137,13 +146,13 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 // |RESET |  Q  |  W  |   E   |   R   |  T  |        |  Y  |  U  |   I   |   O   |  P  | NONE |
 // | NONE |  A  | S/M3| D/M2  | F/M1  |  G  |        |  H  | J/M1| K/M2  | L/M3  |  '  | NONE |
 // | NONE |  Z  |  X  |   C   |   V   |  B  |        |  N  |  M  |   ,   |   .   |  /  | NONE |
-//              |TAB/C|BSPC/S |SPACE/G|ENTER/A|      |ENTER/A|SPACE/G|BSPC/S|TAB/C |
+//              |TAB/C|BSPC/S |SPACE/G|ENTER/A|      |ENTER/A| SPACE |BSPC/S|TAB/C |
             bindings = <
 &bootloader  &kp N1  &kp N2                    &kp N3                   &kp N4                  &kp N5       &kp N6  &kp N7                    &kp N8                   &kp N9                  &kp N0                  &bootloader
 &sys_reset   &kp Q   &kp W                     &kp E                    &kp R                   &kp T        &kp Y   &kp U                     &kp I                    &kp O                   &kp P                   &none
 &none        &kp A   &layer_tap L_MAGIC S      &layer_tap L_FUNC D      &layer_tap L_SYM F      &kp G        &kp H   &layer_tap L_SYM J        &layer_tap L_FUNC K      &layer_tap L_MAGIC L    &kp SQT                 &none
 &none        &kp Z   &kp X                     &kp C                    &kp V                   &kp B        &kp N   &kp M                     &kp COMMA                &kp DOT                 &kp FSLH                &none
-                    &safe_mt LCTRL TAB  &safe_mt LSHFT BSPC  &safe_space_mt LGUI SPACE  &safe_mt LALT ENTER        &safe_mt RALT ENTER  &safe_space_mt RGUI SPACE  &safe_mt RSHFT BSPC  &safe_mt RCTRL TAB
+                    &safe_mt LCTRL TAB  &safe_mt LSHFT BSPC  &safe_space_mt LGUI SPACE  &safe_mt LALT ENTER        &safe_mt RALT ENTER  &kp SPACE  &safe_mt RSHFT BSPC  &safe_mt RCTRL TAB
             >;
         };
 
@@ -184,13 +193,14 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         magic_layer {
             display-name = "Magic";
 // ----------------------------------------------------------------------------------------------------------------
-// | NONE | NONE | NONE  | NONE | NONE | NONE |       | NONE | NONE | NONE | NONE | NONE | NONE |
+// |UNLCK | NONE | NONE  | NONE | NONE | NONE |       | NONE | NONE | NONE | NONE | NONE | NONE |
 // | NONE | RGB  | BRI-  | BRI+ | NONE | NONE |       | NONE | MB1  | MB3  | MB2  | NONE | NONE |
 // | NONE | LOCK | SOUND | DOCK | SHOT | NONE |       | M<   | Mv   | M^   | M>   | MB4  | NONE |
 // | NONE | NONE | NONE  | NONE | NONE | BAT  |       | S<   | Sv   | S^   | S>   | MB5  | NONE |
 //                    |TRNS |TRNS |CMD/TOG|TRNS |     |TRNS |CMD/TOG|TRNS |TRNS |
             bindings = <
-&none  &none                 &none                  &none               &none        &none       &none              &none              &none             &none               &none       &none
+/* Studio stays locked until this is tapped; see CONFIG_ZMK_STUDIO_LOCKING. */
+&studio_unlock  &none         &none                &none               &none        &none       &none              &none              &none             &none               &none       &none
 &none  LRGB(RGB_TOG_CMD)     LRGB(RGB_BRD_CMD)      LRGB(RGB_BRI_CMD)  &none        &none       &none              &mkp MB1           &mkp MB3          &mkp MB2            &none       &none
 &none  &lock_screen          &sound_prefs           &kp LG(LA(D))       &screenshot  &none       &mmv MOVE_LEFT     &mmv MOVE_DOWN     &mmv MOVE_UP      &mmv MOVE_RIGHT     &mkp MB4   &none
 &none  &none                 &none                  &none               &none        &ind_bat    &msc SCRL_LEFT     &msc SCRL_DOWN     &msc SCRL_UP      &msc SCRL_RIGHT     &mkp MB5   &none

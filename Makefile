@@ -2,7 +2,7 @@
 .DEFAULT_GOAL := help
 
 # Phony (non-file) targets
-.PHONY: setup init update build build-left build-right build-reset test clean flash flash-left flash-right flash-reset lint lint-shell lint-yaml hooks help
+.PHONY: setup init update build build-left build-right build-reset test clean flash flash-left flash-right flash-reset live-keymap clear-pinned-keymap lint lint-shell lint-yaml hooks help
 
 help: ## Show available commands
 	@echo "Usage: make [command]"
@@ -71,8 +71,17 @@ flash-left: ## Flash just the left half
 flash-right: ## Flash just the right half
 	@./scripts/flash.sh right
 
-flash-reset: ## Flash the settings_reset image (clears BT pairings)
+flash-reset: ## Flash the settings_reset image (clears saved Studio keymap + BT pairings)
 	@./scripts/flash.sh reset
+
+# ---
+# DIAGNOSE (host, not Docker - needs the USB serial port)
+
+live-keymap: ## Show what keymap the board is REALLY running vs. the build (plug in the left half)
+	@./scripts/live-keymap.py
+
+clear-pinned-keymap: ## Delete Studio-saved bindings so the built keymap wins again (keeps BT pairings)
+	@./scripts/live-keymap.py --clear
 
 # ---
 # LINT (mise tasks defined in .mise.toml; lefthook's pre-commit hook calls them directly too)

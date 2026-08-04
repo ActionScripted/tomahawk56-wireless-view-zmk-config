@@ -1,0 +1,16 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * The reported real-world misfire: after an idle pause, space is pressed and
+ * the thumb lazily rests on it while the next word starts, releasing ~350 ms
+ * in. With the old 300 ms term the timer fired mid-press and made this
+ * Cmd+A; it must be "space a".
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,100)
+        ZMK_MOCK_PRESS(0,1,250)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_RELEASE(0,1,10)
+    >;
+};

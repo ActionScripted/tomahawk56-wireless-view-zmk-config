@@ -21,6 +21,7 @@
 #include <zmk/split/central.h>
 #endif
 #include <zmk/rgb_underglow.h>
+#include <zmk/workqueue.h>
 
 #define LED_COUNT 28
 #define MAIN_ROWS 4
@@ -33,16 +34,14 @@
 
 /*
  * lrgb_sync behavior param1 encoding. The behavior is global, so one binding
- * carries three kinds of traffic:
+ * carries two kinds of traffic:
  *   0x000-0x0FF  state sync sent central -> peripheral: param1 is the active
  *                layer, param2 is brightness with the on/off flag in BIT(8).
+ *                Sent from the work handler below; never bound in the keymap.
  *   0x100-0x1FF  RGB underglow control command (RGB_TOG etc.), forwarded to
  *                &rgb_ug. Must match the LRGB() macro in tomahawk56.keymap.
- *   0x200-0x2FF  layer hold from the keymap's layer_tap: param1 - 0x200 is
- *                the layer to (de)activate.
  */
 #define LRGB_CONTROL_BASE 0x100
-#define LRGB_LAYER_BASE 0x200
 
 #ifndef ZMK_RGB_UNDERGLOW_STATUS_CHANNEL_LAYER
 #define ZMK_RGB_UNDERGLOW_STATUS_CHANNEL_LAYER 1
@@ -237,6 +236,16 @@ static int render_layer(uint8_t layer, uint8_t brightness) {
 static void layer_rgb_work_handler(struct k_work *work);
 K_WORK_DELAYABLE_DEFINE(layer_rgb_work, layer_rgb_work_handler);
 
+/*
+ * Never the system workqueue. That queue drains the split peripheral's key
+ * events and timestamps them as it does so, so stalling it skews right-half
+ * hold-tap timing and silently drops events. This handler does stall:
+ * zmk_split_central_invoke_behavior() can sleep 100 ms on a full send queue.
+ */
+static void layer_rgb_schedule(k_timeout_t delay) {
+    k_work_reschedule_for_queue(zmk_workqueue_lowprio_work_q(), &layer_rgb_work, delay);
+}
+
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 static void layer_rgb_connected(struct bt_conn *conn, uint8_t err) {
     if (err != 0) {
@@ -251,7 +260,7 @@ static void layer_rgb_connected(struct bt_conn *conn, uint8_t err) {
     /* GATT behavior discovery completes asynchronously after this callback. */
     last_synced_layer = UINT8_MAX;
     connect_sync_attempts = LRGB_CONNECT_ATTEMPTS;
-    k_work_reschedule(&layer_rgb_work, K_MSEC(LRGB_CONNECT_RETRY_MS));
+    layer_rgb_schedule(K_MSEC(LRGB_CONNECT_RETRY_MS));
 }
 
 BT_CONN_CB_DEFINE(tomahawk56_layer_rgb_conn_callbacks) = {
@@ -267,7 +276,7 @@ static void layer_rgb_work_handler(struct k_work *work) {
     /* A persisted manual-off state must not carry across a power cycle. */
     if (!startup_rgb_forced_on) {
         if (zmk_rgb_underglow_on() < 0) {
-            k_work_reschedule(&layer_rgb_work, K_MSEC(LRGB_RETRY_MS));
+            layer_rgb_schedule(K_MSEC(LRGB_RETRY_MS));
             return;
         }
         startup_rgb_forced_on = true;
@@ -276,7 +285,7 @@ static void layer_rgb_work_handler(struct k_work *work) {
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     bool underglow_on = false;
     if (zmk_rgb_underglow_get_state(&underglow_on) < 0) {
-        k_work_reschedule(&layer_rgb_work, K_MSEC(LRGB_RETRY_MS));
+        layer_rgb_schedule(K_MSEC(LRGB_RETRY_MS));
         return;
     }
 
@@ -314,7 +323,7 @@ static void layer_rgb_work_handler(struct k_work *work) {
     /* Render Base locally while the central connects and discovers services. */
     if (!remote_initialized) {
         if (zmk_rgb_underglow_get_state(&remote_on) < 0) {
-            k_work_reschedule(&layer_rgb_work, K_MSEC(LRGB_RETRY_MS));
+            layer_rgb_schedule(K_MSEC(LRGB_RETRY_MS));
             return;
         }
         remote_brightness = zmk_rgb_underglow_calc_brt(0).b;
@@ -345,7 +354,7 @@ static void layer_rgb_work_handler(struct k_work *work) {
     }
 
     if (retry) {
-        k_work_reschedule(&layer_rgb_work, K_MSEC(retry_delay_ms));
+        layer_rgb_schedule(K_MSEC(retry_delay_ms));
     }
 }
 
@@ -355,7 +364,7 @@ static int layer_rgb_listener(const zmk_event_t *event) {
     last_layer = UINT8_MAX;
     last_synced_layer = UINT8_MAX;
 #endif
-    k_work_reschedule(&layer_rgb_work, K_NO_WAIT);
+    layer_rgb_schedule(K_NO_WAIT);
     return 0;
 }
 
@@ -366,13 +375,9 @@ ZMK_SUBSCRIPTION(tomahawk56_layer_rgb, zmk_layer_state_changed);
 
 static int layer_rgb_control_convert(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
+    /* Only keymap-bound control commands need relative-to-absolute conversion;
+     * the state sync range is built and sent by the work handler directly. */
     if (binding->param1 < LRGB_CONTROL_BASE) {
-        /* Mark hold-tap layer parameters before the behavior is sent globally. */
-        binding->param1 += LRGB_LAYER_BASE;
-        return 0;
-    }
-
-    if (binding->param1 >= LRGB_LAYER_BASE) {
         return 0;
     }
 
@@ -391,22 +396,6 @@ static int layer_rgb_control_convert(struct zmk_behavior_binding *binding,
 
 static int layer_rgb_sync_pressed(struct zmk_behavior_binding *binding,
                                   struct zmk_behavior_binding_event event) {
-    if (binding->param1 >= LRGB_LAYER_BASE) {
-        uint8_t layer = binding->param1 - LRGB_LAYER_BASE;
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-        int err = zmk_keymap_layer_activate(layer, false);
-        if (err < 0) {
-            return err;
-        }
-        last_layer = UINT8_MAX;
-        last_synced_layer = UINT8_MAX;
-#else
-        remote_layer = layer;
-#endif
-        k_work_reschedule(&layer_rgb_work, K_NO_WAIT);
-        return ZMK_BEHAVIOR_OPAQUE;
-    }
-
     if (binding->param1 >= LRGB_CONTROL_BASE) {
         struct zmk_behavior_binding underglow = {
             .behavior_dev = DEVICE_DT_NAME(DT_NODELABEL(rgb_ug)),
@@ -424,7 +413,7 @@ static int layer_rgb_sync_pressed(struct zmk_behavior_binding *binding,
         zmk_rgb_underglow_get_state(&remote_on);
         remote_brightness = zmk_rgb_underglow_calc_brt(0).b;
 #endif
-        k_work_reschedule(&layer_rgb_work, K_NO_WAIT);
+        layer_rgb_schedule(K_NO_WAIT);
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
@@ -434,30 +423,18 @@ static int layer_rgb_sync_pressed(struct zmk_behavior_binding *binding,
     remote_brightness = binding->param2 & 0xff;
     remote_on = (binding->param2 & BIT(8)) != 0;
     remote_initialized = true;
-    k_work_reschedule(&layer_rgb_work, K_NO_WAIT);
+    layer_rgb_schedule(K_NO_WAIT);
 #else
     ARG_UNUSED(binding);
 #endif
     return ZMK_BEHAVIOR_OPAQUE;
 }
 
+/* Every payload is edge-triggered on press; releases have nothing to undo. */
 static int layer_rgb_sync_released(struct zmk_behavior_binding *binding,
                                    struct zmk_behavior_binding_event event) {
+    ARG_UNUSED(binding);
     ARG_UNUSED(event);
-    if (binding->param1 >= LRGB_LAYER_BASE) {
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-        uint8_t layer = binding->param1 - LRGB_LAYER_BASE;
-        int err = zmk_keymap_layer_deactivate(layer, false);
-        if (err < 0) {
-            return err;
-        }
-        last_layer = UINT8_MAX;
-        last_synced_layer = UINT8_MAX;
-#else
-        remote_layer = 0;
-#endif
-        k_work_reschedule(&layer_rgb_work, K_NO_WAIT);
-    }
     return ZMK_BEHAVIOR_OPAQUE;
 }
 
@@ -475,7 +452,7 @@ static int layer_rgb_init(void) {
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     connect_sync_attempts = LRGB_CONNECT_ATTEMPTS;
 #endif
-    k_work_reschedule(&layer_rgb_work, K_MSEC(350));
+    layer_rgb_schedule(K_MSEC(350));
     return 0;
 }
 

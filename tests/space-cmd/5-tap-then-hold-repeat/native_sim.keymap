@@ -1,14 +1,14 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * Tap space, then press it again 100 ms later and hold 400 ms: quick-tap must
+ * Tap space, then press it again 100 ms later and hold 600 ms: quick-tap must
  * keep the second press as Space (auto-repeat), not Cmd.
  */
 &kscan {
     events = <
         ZMK_MOCK_PRESS(0,0,50)
         ZMK_MOCK_RELEASE(0,0,100)
-        ZMK_MOCK_PRESS(0,0,400)
+        ZMK_MOCK_PRESS(0,0,600)
         ZMK_MOCK_RELEASE(0,0,10)
     >;
 };
