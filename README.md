@@ -128,6 +128,7 @@ colors are the legend:
 | Top-left / top-right outer corner | red | `&bootloader` for **that half** — the only way in, and the first step of a flash |
 | Next key in, both halves | orange | `&sys_reset` for that half: reboots it, keeps all settings. Fixes a wedged half or a split link that will not reconnect, without the power switch |
 | Left outer, second row | purple | `&studio_unlock` (left half is the Studio half) |
+| Left `Q` / `W` / `E` | yellow | RGB toggle, brightness down, brightness up — the same positions Magic uses |
 | Left home row `A`–`G` | blue | Bluetooth profiles 1-5. The selected one turns **green** when its host is connected, **white** while it is still advertising |
 | Left `Z` | magenta | `&bt BT_CLR` — forget the selected profile so that slot can pair again |
 | Left `Z`+`X` together | magenta + red | `&bt BT_CLR_ALL` — forget every host pairing. A chord on purpose; it is not undoable |
@@ -136,7 +137,8 @@ colors are the legend:
 | All eight thumbs | white | Back to Base |
 
 Both entry pairs stay lit white while the layer is on, so the way out is always
-visible. RGB toggle and brightness stay on Magic `Q/W/E`, not here.
+visible. RGB is on `Q/W/E` in both places on purpose: Magic is the quick hold for
+a one-off nudge, and Settings is where you sit and walk brightness up or down.
 
 Split pairing between the halves is a separate bond from the host profiles:
 `BT_CLR_ALL` does not touch it. Wiping that (and everything else in the settings
