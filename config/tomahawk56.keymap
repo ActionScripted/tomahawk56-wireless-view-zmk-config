@@ -89,7 +89,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
                 18 19 20 21 22 23
                 30 31 32 33 34 35
                 42 43 44 45 46 47
-                52 53 54 55>;
+                48 49 50 51 52 53 54 55>;
             bindings = <&mo>, <&kp>;
         };
 
@@ -105,7 +105,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
                 12 13 14 15 16 17
                 24 25 26 27 28 29
                 36 37 38 39 40 41
-                48 49 50 51>;
+                48 49 50 51 52 53 54 55>;
             bindings = <&mo>, <&kp>;
         };
 
@@ -125,9 +125,12 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
          * without waiting out the tapping term. A roll where the thumb comes
          * up first remains a tap.
          *
-         * No require-prior-idle here: on Shift, Ctrl or Option it would turn a
-         * quick intentional hold right after typing into a stray Bspc, Tab or
-         * Enter.
+         * require-prior-idle stays short here. Its job is the correction burst:
+         * a thumb pressed mid-typing, with the next letter pressed and released
+         * before the thumb comes up, otherwise resolves as a modifier and eats
+         * the Bspc. A large value would instead eat a deliberate hold taken
+         * right after a word, turning Shift, Ctrl or Option into a stray Bspc,
+         * Tab or Enter - so this is set to roughly one keystroke interval.
          */
         safe_mt: safe_mod_tap {
             compatible = "zmk,behavior-hold-tap";
@@ -135,6 +138,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             flavor = "balanced";
             tapping-term-ms = <175>;
             quick-tap-ms = <200>;
+            require-prior-idle-ms = <80>;
             bindings = <&kp>, <&kp>;
         };
 
