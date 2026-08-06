@@ -1,0 +1,15 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * Same-hand overlap where the nested key is still held when the tapping term
+ * expires. The positional guard must still force a tap: this is "sc" typed
+ * with a lazy left hand, not a layer chord.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(1,0,200)
+        ZMK_MOCK_RELEASE(1,0,30)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

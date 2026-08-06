@@ -1,0 +1,22 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * The reported hardware misfire, reproduced: tap Backspace, press it again,
+ * and roll a letter inside that second press.
+ *
+ * The re-press lands 150 ms after the first, deliberately outside the 125 ms
+ * quick-tap window - which is why quick-tap-ms alone could not save the
+ * balanced version of this behavior. It produced a delete followed by a
+ * capital letter. Under tap-preferred the nested letter cannot reach the
+ * modifier at all, so the burst stays Backspace, Backspace, lowercase.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,40)
+        ZMK_MOCK_RELEASE(0,0,110)
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

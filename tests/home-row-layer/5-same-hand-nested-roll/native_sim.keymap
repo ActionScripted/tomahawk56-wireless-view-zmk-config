@@ -1,0 +1,11 @@
+#include "../behavior_keymap.dtsi"
+
+/* A nested key on the same hand is excluded by the positional trigger list. */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(1,0,30)
+        ZMK_MOCK_RELEASE(1,0,30)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

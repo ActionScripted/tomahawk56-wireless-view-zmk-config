@@ -1,0 +1,11 @@
+#include "../behavior_keymap.dtsi"
+
+/* A quick thumb-to-alpha roll is Backspace then A, never Shift+A. */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,1,40)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_RELEASE(0,1,10)
+    >;
+};

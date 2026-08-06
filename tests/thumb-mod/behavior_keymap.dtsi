@@ -1,0 +1,33 @@
+/*
+ * Mirror of safe_mt from config/tomahawk56.keymap.
+ *
+ * Keep every timing here identical to the production node. A drifted mirror
+ * makes the suite pass while describing a keyboard that does not exist.
+ */
+
+#include <dt-bindings/zmk/keys.h>
+#include <behaviors.dtsi>
+#include <dt-bindings/zmk/kscan_mock.h>
+
+/ {
+    behaviors {
+        thm: safe_thumb_mod_tap {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <175>;
+            quick-tap-ms = <125>;
+            bindings = <&kp>, <&kp>;
+        };
+    };
+
+    keymap {
+        compatible = "zmk,keymap";
+
+        default_layer {
+            bindings = <
+                &thm LSHFT BSPC &kp A
+                &kp B &kp C>;
+        };
+    };
+};

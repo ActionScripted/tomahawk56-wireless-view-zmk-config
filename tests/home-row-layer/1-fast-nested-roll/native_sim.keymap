@@ -1,0 +1,11 @@
+#include "../behavior_keymap.dtsi"
+
+/* A rolling opposite-hand overlap (S released first) remains ordinary typing. */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_RELEASE(0,1,10)
+    >;
+};

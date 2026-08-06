@@ -1,0 +1,15 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * A deliberate chord started 180 ms in - short of the 250 ms term. It must
+ * still produce the symbol, resolving on the target key's release rather than
+ * waiting out the timer. This is what makes a long tapping term free.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,180)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

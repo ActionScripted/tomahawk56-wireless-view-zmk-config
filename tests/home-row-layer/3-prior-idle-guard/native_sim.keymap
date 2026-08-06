@@ -1,0 +1,11 @@
+#include "../behavior_keymap.dtsi"
+
+/* Within a typing streak, even a lazily held S must not activate its layer. */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(1,0,10)
+        ZMK_MOCK_RELEASE(1,0,50)
+        ZMK_MOCK_PRESS(0,0,400)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

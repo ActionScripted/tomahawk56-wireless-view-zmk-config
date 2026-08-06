@@ -1,0 +1,17 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * A complete A tap nested inside the thumb press must remain a thumb tap.
+ *
+ * This is the case that sent safe_mt back to tap-preferred. Under balanced it
+ * resolved on A's release and produced Shift+A, which showed up on hardware as
+ * a capital letter in the middle of a Backspace correction burst.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

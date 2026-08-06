@@ -1,0 +1,15 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * tap-preferred ignores the interrupting key entirely, so the only route to
+ * the modifier is the timer: the thumb must be held past the full 175 ms term
+ * before the chord key means anything.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,180)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

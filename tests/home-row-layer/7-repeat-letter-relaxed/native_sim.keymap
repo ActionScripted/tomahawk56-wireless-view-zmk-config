@@ -1,0 +1,17 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * A doubled letter typed just outside the prior-idle window ("ss" in "less").
+ * The second S lingers while the next letter is tapped, so only a same-key
+ * quick-tap guard can keep this as typing rather than a layer chord.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,50)
+        ZMK_MOCK_RELEASE(0,0,120)
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

@@ -1,0 +1,14 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * A word-initial S after a pause, pressed with a lazy 200 ms dwell and nothing
+ * else touched. The prior-idle guard cannot help here, so the tapping term is
+ * the only thing standing between a slow keystroke and a silently swallowed
+ * letter.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,200)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};
