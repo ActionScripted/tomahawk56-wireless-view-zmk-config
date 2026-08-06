@@ -59,7 +59,7 @@
 #define LRGB_BT_FIRST_COL 1
 #define LRGB_BT_PROFILE_COUNT 4
 
-/* The USB/BLE pair on the second row; the selected one is repainted purple. */
+/* The USB/BLE pair on the second row; the selected one is repainted green. */
 #define LRGB_OUT_ROW 1
 #define LRGB_OUT_USB_COL 1
 #define LRGB_OUT_BLE_COL 2
@@ -134,13 +134,12 @@ static const uint8_t magic_main[MAIN_ROWS][MAIN_COLS] = {
 
 /*
  * Settings reads as its own instrument panel: red is irreversible (the
- * bootloader corner, and the V+B pair that forgets every pairing), blue is
- * Bluetooth, white is the way out (the entry pair and every thumb).
+ * bootloader corner and BT_CLR_ALL), blue is Bluetooth, white is the way out
+ * (the entry pair and every thumb).
  */
 static const uint8_t settings_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_RED, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_RED},
-    /* Unlock is orange, not purple: purple is reserved for the selected output,
-     * which lands on the adjacent key whenever USB is the one chosen. */
+    /* Unlock is orange; the selected output is repainted green at render time. */
     {COLOR_ORANGE, COLOR_TEAL, COLOR_LIGHT_BLUE, COLOR_OFF, COLOR_OFF, COLOR_OFF},
     {COLOR_WHITE, COLOR_OFF, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_OFF},
     {COLOR_WHITE, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_GREEN},
@@ -220,29 +219,14 @@ BUILD_ASSERT(ARRAY_SIZE(thumb_maps) == ARRAY_SIZE(main_maps),
 BUILD_ASSERT(LRGB_SETTINGS_LAYER < ARRAY_SIZE(main_maps),
              "LRGB_SETTINGS_LAYER must match L_SET in tomahawk56.keymap");
 
-/* Physical LED index for each visually left-to-right main-key position. */
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+/* Physical LED index for each main-key position of the map above. Both halves
+ * chain the same way, top row starting at the outer column. */
 static const uint8_t main_pixels[MAIN_ROWS][MAIN_COLS] = {
     {5, 4, 3, 2, 1, 0},
     {6, 7, 8, 9, 10, 11},
     {17, 16, 15, 14, 13, 12},
     {18, 19, 20, 21, 22, 23},
 };
-#else
-static const uint8_t main_pixels[MAIN_ROWS][MAIN_COLS] = {
-    /*
-     * The top-row LED chain begins at OUTER, then runs inward from 0 to 6 - the
-     * same shape as the left half's top row, not the reverse. Read off the board
-     * by painting the row six distinct colors; every layer had colored this row
-     * uniformly, so the old reversed order never showed. The connectivity pixel
-     * (index 1, config/tomahawk56_right.conf) lands on "0", which matches.
-     */
-    {5, 4, 3, 2, 1, 0},
-    {6, 7, 8, 9, 10, 11},
-    {17, 16, 15, 14, 13, 12},
-    {18, 19, 20, 21, 22, 23},
-};
-#endif
 
 static const uint16_t led_indices[LED_COUNT] = {
     0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13,
@@ -297,7 +281,7 @@ static void mark_active_bt_profile(void) {
 }
 
 /*
- * The selected output turns purple; the other keeps its resting color. This
+ * The selected output turns green; the other keeps its resting color. This
  * follows the *preferred* transport, not the one currently carrying traffic, so
  * the key reports what you chose even when that transport is unavailable -
  * picking USB while unplugged still moves the light.
@@ -307,7 +291,7 @@ static void mark_active_output(void) {
                       ? LRGB_OUT_USB_COL
                       : LRGB_OUT_BLE_COL;
 
-    colors[main_pixels[LRGB_OUT_ROW][col]] = palette[COLOR_PURPLE];
+    colors[main_pixels[LRGB_OUT_ROW][col]] = palette[COLOR_GREEN];
 }
 #endif
 

@@ -1,15 +1,13 @@
 # Space/Cmd behavior tests
 
-Regression tests for `safe_space_mt` (`config/tomahawk56.keymap`): Space on
-tap, Cmd only by holding past the 225 ms tapping term. They pin the property
-that fast typing can never misfire Cmd.
+Regression tests for `safe_space_mt` (`config/tomahawk56.keymap`): Space on tap,
+Cmd only by holding past the tapping term, and fast typing can never misfire Cmd.
 
-Run them with `make test`. Each case uses ZMK's snapshot test format
-(`zmk/app/tests`): `native_sim.keymap` feeds timed key events into the real
-firmware built for the native simulator, output lines matching
-`events.patterns` are compared against `keycode_events.snapshot`, and any
-diff fails the case. `behavior_keymap.dtsi` here must mirror the
-`safe_space_mt` definition in the real keymap.
+Run with `make test`. Each case uses ZMK's snapshot test format
+(`zmk/app/tests`): `native_sim.keymap` feeds timed key events into the firmware
+built for the native simulator, output lines matching `events.patterns` are
+diffed against `keycode_events.snapshot`, and any difference fails the case.
+`behavior_keymap.dtsi` must mirror the real `safe_space_mt` definition.
 
 | Case | Scenario | Expectation |
 | --- | --- | --- |

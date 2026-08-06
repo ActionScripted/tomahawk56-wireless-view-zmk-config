@@ -1,21 +1,19 @@
 #!/usr/bin/env python3
 """Diff the keymap the keyboard is actually running against the compiled one.
 
-ZMK Studio's keymap storage silently outranks the firmware: `keymap_handle_set()`
-in zmk/app/src/keymap.c reapplies saved bindings over `zmk_keymap` on every boot,
-so any position ever saved from Studio survives every rebuild and reflash, with
-nothing on the device or in the build output to say so.
+Bindings saved from ZMK Studio outrank the firmware: `keymap_handle_set()` in
+zmk/app/src/keymap.c reapplies them over `zmk_keymap` on every boot, and a
+reflash does not dislodge them.
 
-Talks to the left/central half over the Studio RPC UART that the
-`studio-rpc-usb-uart` snippet exposes over USB. Reporting is read-only - the only
-request sent is keymap.get_keymap. Positions are compared by parameters, not by
-behavior, so two parameterless behaviors (&none vs &studio_unlock, say) look
-alike; that is fine for catching pinned bindings, which always carry parameters.
+Talks to the left/central half over the Studio RPC UART exposed by the
+`studio-rpc-usb-uart` snippet. Reporting is read-only (keymap.get_keymap only).
+Positions are compared by parameters, not by behavior, so two parameterless
+behaviors look alike - fine for catching pinned bindings, which always carry
+parameters.
 
---clear also sends core.reset_settings, whose one registered handler is
-zmk_keymap_reset_settings(): it drops the saved bindings and reloads the compiled
-keymap, leaving Bluetooth pairings alone (flashing reset.uf2 wipes those too). It
-then re-reads the keymap to confirm the board matches the build.
+--clear additionally sends core.reset_settings, which drops the saved bindings
+and reloads the compiled keymap, leaving Bluetooth pairings alone. It then
+re-reads the keymap to confirm the board matches the build.
 
 Usage:  scripts/live-keymap.py [--clear] [/dev/cu.usbmodemXXXX]
 """
@@ -27,7 +25,8 @@ import time
 
 SOF, ESC, EOF = 0xAB, 0xAC, 0xAD
 DTS = "build/left/zephyr/zephyr.dts"
-LAYER_NODES = ("base_layer", "symbols_layer", "functional_layer", "magic_layer")
+LAYER_NODES = ("base_layer", "symbols_layer", "functional_layer", "magic_layer",
+               "settings_layer")
 
 
 # --- Studio RPC framing (mirrors zmk/app/src/studio/msg_framing.c) ---------

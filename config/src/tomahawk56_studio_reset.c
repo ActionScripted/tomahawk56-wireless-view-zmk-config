@@ -4,26 +4,18 @@
  *
  * A Studio save writes bindings into the settings partition, and
  * `keymap_handle_set()` in zmk/app/src/keymap.c reapplies them over the
- * compiled keymap on every boot. Nothing in a rebuild or a reflash dislodges
- * them - the settings partition is not part of the .uf2 - so a position edited
- * once from Studio stays pinned forever, with nothing on the device or in the
- * build output to say so.
+ * compiled keymap on every boot. The settings partition is not part of the
+ * .uf2, so a reflash cannot dislodge them.
  *
- * This ties the saved keymap to the image that was running when it was saved.
  * Each build stamps a fresh TOMAHAWK56_BUILD_ID into the firmware (see
- * cmake/tomahawk56_build_id.cmake); the id of the image that last ran is kept
- * in settings alongside the keymap. When they disagree - i.e. the board just
- * booted an image it has not run before - the saved keymap is dropped and the
- * compiled one takes over.
+ * cmake/tomahawk56_build_id.cmake) and the id of the image that last ran is
+ * kept in settings. When they disagree the board is booting an image it has not
+ * run before, so the saved keymap is dropped. Nothing else in settings is
+ * touched; `make flash-reset` wipes the whole partition.
  *
- * Only the saved keymap is touched. Bluetooth pairings, the RGB state, and
- * every other setting survive; `make flash-reset` remains the way to wipe the
- * whole settings partition.
- *
- * The work happens in the settings commit callback rather than a SYS_INIT
- * hook: `settings_load()` runs from main() (zmk/app/src/main.c), long after
- * every SYS_INIT, and commit callbacks are the one hook Zephyr runs after all
- * stored values have been applied.
+ * This runs from the settings commit callback rather than SYS_INIT because
+ * `settings_load()` runs from main(), long after every SYS_INIT, and commit is
+ * the one hook Zephyr runs once all stored values have been applied.
  */
 
 #include <stdint.h>

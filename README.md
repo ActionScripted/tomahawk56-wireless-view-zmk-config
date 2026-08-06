@@ -25,19 +25,19 @@ make flash   # left, then right
 ```
 Just one half: `make flash-left` / `make flash-right`. Details: `make help`, `scripts/flash.sh`.
 
-Flashing a newly built image drops any keymap saved from ZMK Studio, so the
-board always comes up running exactly what was built. Bluetooth pairings and
-the rest of the settings partition are untouched; `make flash-reset` is still
-the way to wipe those. See Diagnostics for how it works and how to turn it off.
+Flashing a newly built image drops any keymap saved from ZMK Studio, so the board
+always comes up running exactly what was built. Bluetooth pairings and the rest
+of the settings partition are untouched; `make flash-reset` wipes those too.
 
 ## Testing
 
 ```sh
 make test
 ```
-Runs the behavior tests in `tests/` on ZMK's native simulator (timed key
-events in, emitted keycodes diffed against snapshots). Currently covers the
-Space/Cmd thumb keys; see `tests/space-cmd/README.md`.
+Runs the behavior tests in `tests/` on ZMK's native simulator: timed key events
+in, emitted keycodes diffed against snapshots. Covers the home-row layer-taps,
+the Space/Cmd thumbs, and the other modifier thumbs; see the README in each
+directory.
 
 ## Linting
 
@@ -50,7 +50,7 @@ Runs via `mise` (`.mise.toml`); `lefthook` runs the same checks on `git commit` 
 
 - **[customkeymap.com](https://customkeymap.com/) (recommended)**: web-based ZMK keymap visualizer/editor. Point it at this repo (owner/repo or a direct `.keymap` link), click keys to change bindings/layers/behaviors/combos, and commit straight back to GitHub — or export SVG/PNG or a `.keymap` file. No install required.
 - [keymap-editor](https://nickcoutsos.github.io/keymap-editor/): web app, GitHub OAuth, commits straight to this repo.
-- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half, studio-rpc enabled). **Saving writes to the board's settings flash, not to this repo, and those bindings then override the compiled keymap on every boot** — they last until the next firmware flash clears them (see Diagnostics), so anything worth keeping belongs in `config/tomahawk56.keymap`. Locked by default; unlock with the purple key on the Settings layer (`&studio_unlock`).
+- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half, studio-rpc enabled). **Saving writes to the board's settings flash, not to this repo, and those bindings then override the compiled keymap on every boot** — they last until the next firmware flash clears them (see Diagnostics), so anything worth keeping belongs in `config/tomahawk56.keymap`. Locked by default; unlock with the orange key on the Settings layer (`&studio_unlock`).
 - Directly: `config/tomahawk56.keymap` (ASCII layer diagrams in comments)
 
 ## Diagnostics
@@ -60,38 +60,23 @@ probably running bindings pinned in settings flash by a ZMK Studio save made
 since the last flash. Plug the **left** half in over USB and ask it:
 
 ```sh
-make live-keymap
-```
-
-It reads the running keymap (read-only) and lists every position where the board
-disagrees with `build/left/zephyr/zephyr.dts`. To clear pinned bindings:
-
-```sh
-make clear-pinned-keymap   # drops the saved keymap; keeps Bluetooth pairings
+make live-keymap           # read-only; lists every position that disagrees with the build
+make clear-pinned-keymap   # drop the saved keymap, keeping Bluetooth pairings
 ```
 
 `make flash-reset` does the same but wipes the whole settings partition, so it
 forces re-pairing.
 
-Why this happens: `CONFIG_ZMK_STUDIO` selects
-`CONFIG_ZMK_KEYMAP_SETTINGS_STORAGE`, and `keymap_handle_set()` in
-`zmk/app/src/keymap.c` reapplies saved bindings over the compiled keymap at every
-boot. Saved bindings store a behavior *local ID* assigned at build time, so after
-an unrelated rebuild a pinned binding can even resolve to a different behavior
-than the one saved.
-
-Which is why the firmware clears them itself on the first boot after a flash
-(`CONFIG_TOMAHAWK56_STUDIO_RESET_ON_FLASH`, on by default). Every build stamps a
-fresh id into the image (`config/cmake/tomahawk56_build_id.cmake`); the board
-records the id it last booted next to the saved keymap, and
-`config/src/tomahawk56_studio_reset.c` drops that keymap whenever the two
-disagree. Set `CONFIG_TOMAHAWK56_STUDIO_RESET_ON_FLASH=n` in
-`config/tomahawk56.conf` to keep Studio saves across flashes instead.
+The firmware also clears pinned bindings itself on the first boot after a flash
+(`CONFIG_TOMAHAWK56_STUDIO_RESET_ON_FLASH`, on by default): every build stamps a
+fresh id into the image, the board records the id it last booted, and
+`config/src/tomahawk56_studio_reset.c` drops the saved keymap when the two
+disagree. Set it to `n` in `config/tomahawk56.conf` to keep Studio saves across
+flashes instead.
 
 ## Runtime key bindings
 
-The source-defined layout (derived from the Dygma Defy "Cruiser" layout) has
-five layers:
+Five layers, derived from the Dygma Defy "Cruiser" layout:
 
 - Hold `F` or `J` for Symbols.
 - Hold `D` or `K` for Functional.
@@ -102,13 +87,10 @@ five layers:
 - Squeeze either half's two lower outer keys together for Settings (below).
 
 The thumbs tap Tab, Backspace, Space, and Enter; holding them produces Ctrl,
-Shift, Cmd, and Option respectively. The right Space thumb is the exception: it
-is a plain Space key with no hold behavior, so it auto-repeats when held — the
-left Space thumb carries the Cmd hold. Modifier-thumb holds use a 175 ms term;
-Space/Cmd uses 225 ms with tap-preferred resolution protecting interrupted
-typing rolls. See
-[`docs/migration_plan.md`](docs/migration_plan.md)
-for all four typing-layer diagrams and the exact Defy migration.
+Shift, Cmd, and Option respectively, mirrored on both halves. All thumbs are
+tap-preferred, so no interrupting key can force a modifier — and no thumb
+repeats its tap keycode by being held. To repeat Space or Backspace, tap it and
+re-press within the quick-tap window.
 
 ## Settings
 
@@ -121,84 +103,62 @@ roll can reach either pair.
 Settings is latched, not held — both hands stay free, so stepping through
 profiles is just repeated taps. **Any thumb key exits**, as does the same squeeze
 again. Every position the layer does not use is `&none`, so while Settings is on
-the board types nothing and a stray key press cannot do damage. The per-key
-colors are the legend:
+the board types nothing. The per-key colors are the legend:
 
 | Key | Color | Does |
 | --- | --- | --- |
 | Top-left / top-right outer corner | red | `&bootloader` for **that half** — the only way in, and the first step of a flash |
 | `1`–`4` | blue | Bluetooth profiles 1-4. The selected one turns **green** when its host is connected, **white** while it is still advertising |
-| `5` | red | `&bt BT_CLR_ALL` — forget all four pairings at once. The only forget there is, and not undoable |
-| Outer, second row | orange | `&studio_unlock` (left half is the Studio half). Orange so purple stays unambiguously "this output is selected" — the two keys are neighbors |
-| `Q` / `W` | teal / light blue | Send typing over USB / over Bluetooth. Whichever is selected turns **purple** |
+| `5` | red | `&bt BT_CLR_ALL` — forget all four pairings at once. Not undoable |
+| Outer, second row | orange | `&studio_unlock` (left half is the Studio half) |
+| `Q` / `W` | teal / light blue | Send typing over USB / over Bluetooth. Whichever is selected turns **blue** |
 | `S` / `D` / `F` | yellow | RGB toggle, brightness down, brightness up |
 | `B` | green | Battery readout — both halves paint a level bar, green to red |
 | All eight thumbs | white | Back to Base |
 
 Settings is a **left-handed panel**: every control is on the left half, and the
 right half keeps only its own bootloader corner and the white pair that toggles
-the layer. In Settings the right hand's whole job is leaving.
+the layer. Both entry pairs stay lit white while the layer is on, so the way out
+is always visible.
 
-Both entry pairs stay lit white while the layer is on, so the way out is always
-visible. RGB appears in both places on purpose: Magic is the quick hold for a
-one-off nudge, and Settings is where you sit and walk brightness up or down.
-
-There is no soft-reboot key — the power switch on each half already does that.
-
-Placement follows how each key gets *used*, not what it is called. Brightness is
-tapped repeatedly, so it sits on strong home-row fingers with an empty row
-between it and the Bluetooth profiles — a slip upward from `W` used to switch
-profile and drop the connection mid-adjustment. Battery is a rare one-shot, so it
-takes the mnemonic on `B`. USB/Bluetooth is a two-position switch, so it lives as
-an adjacent pair directly under the Bluetooth row and lights the selected side
-purple; adjacency and that light teach it far faster than any letter would.
-
-The profile keys are on the number row for a reason: `zmk-rgbled-widget` finds
-any `&bt BT_SEL` binding and puts its own connect/advertise indicator on that
-key, using a position-to-pixel formula that only agrees with our LED map on that
-row. On the home row its light landed on the mirrored key three columns away.
+RGB appears both here and on Magic on purpose: Magic is the quick hold for a
+one-off nudge, Settings is where you sit and walk brightness up or down. There is
+no soft-reboot key — the power switch on each half already does that.
 
 Split pairing between the halves is a separate bond from the host profiles:
 `BT_CLR_ALL` does not touch it. Wiping that (and everything else in the settings
-partition) is still `make flash-reset`.
+partition) is `make flash-reset`.
 
 ## Layer lighting
 
 The firmware uses the 28 addressable LEDs on each half as 24 main-key LEDs and
 four thumb LEDs. There is no separate set of underglow-only pixels on the
-Tomahawk56; ZMK's underglow controls power and dim this per-key map.
-RGB is forced on at each power-up and remains on while the keyboard is awake;
-the Magic-layer RGB toggle can still turn it off for the current session.
+Tomahawk56; ZMK's underglow controls power and dim this per-key map. RGB is
+forced on at each power-up and stays on while the keyboard is awake; the Magic
+and Settings toggles can still turn it off for the current session.
 
 - Base lights the five active main columns on each half white and leaves both
-  physical outer columns dark. The Cmd/Space thumb on each half is bright
-  magenta, matching the Settings-layer Z key; the other thumbs retain the Defy
-  role colors for Ctrl, Shift, and Option.
+  physical outer columns dark. The thumbs keep the Defy role colors for Ctrl,
+  Shift, Cmd, and Option, on every layer except Settings.
 - Symbols leaves the number row and outer columns dark, then lights the three
   symbol rows orange, teal, and yellow from top to bottom.
-- Functional lights F1-F12 purple. Media is green; delete/editing is red;
-  arrows are teal; document navigation is orange; window/navigation chords are
-  blue or magenta; and application shortcuts are lime.
+- Functional lights F1-F12 purple, then groups the rest by kind: media, editing,
+  arrows, document navigation, window chords, and application shortcuts.
 - Magic follows the Defy groups: RGB controls blue, macros red/orange/yellow/
   green, mouse movement teal, scrolling magenta, and mouse buttons blue/green.
-  The primary/middle/secondary buttons use the Defy's distinct light blue;
-  back/forward use green.
 - Settings is its own instrument panel; see the table above. Only its Bluetooth
-  row is dynamic — the central redraws it on profile and connection changes.
+  and output keys are dynamic — the central redraws them on profile, connection,
+  and endpoint changes.
 
-The left half synchronizes the active layer, brightness, and on/off state to
-the right half over ZMK's existing split behavior transport. Battery and BLE
-indicators remain on their independent RGB override channels. Layer changes,
-RGB controls, split reconnections, and activity-state changes refresh the map
-as events occur; the firmware does not wake periodically to poll RGB state.
-For the static solid effect, each requested change renders once and stops the
-underlying 20 Hz animation timer; animated underglow effects retain that timer.
+The left half syncs the active layer, brightness, and on/off state to the right
+half over ZMK's existing split behavior transport. Battery and BLE indicators
+stay on their independent RGB override channels. The map refreshes on events —
+layer changes, RGB controls, split reconnections, activity state — rather than by
+polling, and a static frame stops the underlying 20 Hz animation timer.
 
 > [!IMPORTANT]
 > Pointing support changes the HID descriptor. Delete and re-pair the keyboard
-> on Bluetooth hosts if mouse keys do not work after flashing. If ZMK Studio was
-> previously used, choose **Restore Stock Settings** before testing this source
-> layout, then restore split pairing if the reset cleared it.
+> on Bluetooth hosts if mouse keys do not work after flashing.
 
 > [!CAUTION]
 > Physical power switch is located near USB-C connector. \

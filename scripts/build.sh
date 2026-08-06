@@ -17,10 +17,9 @@ require_init() {
     echo "No .west workspace - run 'make init' first." >&2
     exit 1
   }
-  # Each `make` target runs in its own throwaway container (see compose.yaml),
-  # so the CMake package registration `west zephyr-export` writes under the
-  # container's home directory doesn't survive between runs - only /workspace
-  # (the bind-mounted repo) does. Re-run it every time; it's cheap.
+  # Each `make` target runs in its own throwaway container, and zephyr-export
+  # writes its CMake package registration outside /workspace, so it does not
+  # survive between runs. Re-run it every time; it's cheap.
   west zephyr-export
 }
 

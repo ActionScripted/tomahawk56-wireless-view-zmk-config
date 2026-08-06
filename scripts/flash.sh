@@ -1,25 +1,21 @@
 #!/usr/bin/env bash
-# Copies a built .uf2 onto a connected UF2 bootloader drive. Bootloader mode is
-# entered with a key press, not a physical button: squeeze either half's two
-# lower outer keys together to turn the Settings layer on, then tap that half's
-# top outer corner, which is where config/tomahawk56.keymap binds &bootloader.
-# Nothing on Base reboots the board. Combos and layers are resolved on the
-# left/central half, so both halves must be on when using the in-keymap
-# bootloader shortcut. This replicates Zephyr's own
-# `west flash` uf2 runner (scripts/west_commands/runners/uf2.py): it looks for
-# a FAT volume with INFO_UF2.TXT at its root, refuses to guess if more than
-# one matches, and copies the file over. Runs on the host rather than through
-# `make`/Docker, since Docker Desktop on macOS doesn't expose the USB
-# mass-storage volume the bootloader presents.
+# Copies a built .uf2 onto a connected UF2 bootloader drive, the way Zephyr's
+# own `west flash` uf2 runner does: find a FAT volume with INFO_UF2.TXT at its
+# root, refuse to guess if more than one matches, copy the file over. Runs on
+# the host, not through Docker, which on macOS cannot see the USB volume.
+#
+# Bootloader mode is entered from the keymap, not a button: squeeze either
+# half's two lower outer keys for the Settings layer, then tap that half's top
+# outer corner. Layers resolve on the left/central half, so both halves must be
+# on for that shortcut.
 #
 # Avoids bash arrays on purpose: macOS still ships bash 3.2 by default, which
 # mishandles "${arr[@]}" on an empty array under `set -u`.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Volume name the mikoto's UF2 bootloader mounts under (fallback match when
-# INFO_UF2.TXT isn't readable yet - macOS can expose the mountpoint before the
-# FAT contents are listable, which used to leave the wait loop stuck forever).
+# Volume name the mikoto's UF2 bootloader mounts under. Used as a fallback
+# match: macOS can expose the mountpoint before the FAT contents are listable.
 BOOTLOADER_VOLUME_PREFIX="MIKOTO-BOOT"
 
 is_mountpoint() {
