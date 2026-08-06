@@ -261,10 +261,10 @@ static const uint8_t *thumb_map_for_layer(uint8_t layer) {
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 /*
- * The five Bluetooth profile keys sit on the central's home row, so the central
- * can report their state without extending the split sync payload: the selected
- * profile turns green once its host is connected, white while it is still
- * advertising. The other four stay blue.
+ * The four Bluetooth profile keys are the central's own, so their state needs
+ * no room in the split sync payload: the selected profile turns green once its
+ * host is connected, white while it is still advertising, and the other three
+ * stay blue.
  */
 static void mark_active_bt_profile(void) {
     int active = zmk_ble_active_profile_index();

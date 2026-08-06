@@ -111,7 +111,7 @@ the board types nothing. The per-key colors are the legend:
 | `1`–`4` | blue | Bluetooth profiles 1-4. The selected one turns **green** when its host is connected, **white** while it is still advertising |
 | `5` | red | `&bt BT_CLR_ALL` — forget all four pairings at once. Not undoable |
 | Outer, second row | orange | `&studio_unlock` (left half is the Studio half) |
-| `Q` / `W` | teal / light blue | Send typing over USB / over Bluetooth. Whichever is selected turns **blue** |
+| `Q` / `W` | teal / light blue | Send typing over USB / over Bluetooth. Whichever is selected turns **green** |
 | `S` / `D` / `F` | yellow | RGB toggle, brightness down, brightness up |
 | `B` | green | Battery readout — both halves paint a level bar, green to red |
 | All eight thumbs | white | Back to Base |
