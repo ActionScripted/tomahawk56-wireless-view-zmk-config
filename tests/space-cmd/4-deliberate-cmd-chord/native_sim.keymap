@@ -1,8 +1,8 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * Deliberate Cmd: space held alone past the 225 ms term, then A tapped.
- * Must produce a Cmd+A chord, no space.
+ * Space/Cmd held alone past the 225 ms term still resolves through the timer.
+ * It must produce a Cmd+A chord, no space.
  */
 &kscan {
     events = <

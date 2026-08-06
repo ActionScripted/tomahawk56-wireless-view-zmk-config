@@ -1,6 +1,6 @@
 /*
  * Mirror of safe_space_mt from config/tomahawk56.keymap: Space on tap,
- * Cmd (LGUI) only by holding past the tapping term.
+ * Cmd (LGUI) for a nested chord or a hold past the tapping term.
  */
 
 #include <dt-bindings/zmk/keys.h>
@@ -12,9 +12,9 @@
         spc: safe_space_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
+            flavor = "balanced";
             tapping-term-ms = <225>;
-            quick-tap-ms = <125>;
+            quick-tap-ms = <200>;
             require-prior-idle-ms = <150>;
             bindings = <&kp>, <&kp>;
         };

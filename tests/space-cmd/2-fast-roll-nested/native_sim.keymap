@@ -1,8 +1,8 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * Nested roll: A pressed AND released while space is still down. This is the
- * sequence the old "balanced" flavor turned into Cmd+A. Must be "space a".
+ * A pressed and released while Space/Cmd remains down is a fast Cmd+A chord.
+ * It must resolve on A's release without waiting for the tapping term.
  */
 &kscan {
     events = <

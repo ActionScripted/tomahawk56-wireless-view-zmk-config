@@ -13,7 +13,7 @@ fails loudly instead of quietly.
 | 5 same-hand-nested-roll | a same-hand neighbour, released early, forces a tap |
 | 6 same-hand-held-overlap | a same-hand neighbour *still held* at the term forces a tap |
 | 7 repeat-letter-relaxed | a doubled letter outside the idle window stays typing |
-| 8 word-initial-long-dwell | a 200 ms dwell on a lone key still types its letter |
+| 8 word-initial-long-dwell | a 150 ms dwell on a lone key still types its letter |
 | 9 held-alone-then-chord | held alone past the term, the layer does engage |
 
 Case 6 is why the behaviors must not use `hold-trigger-on-release`: it defers the

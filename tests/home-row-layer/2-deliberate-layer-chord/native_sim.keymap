@@ -1,7 +1,7 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * A deliberate chord started 180 ms in - short of the 250 ms term. It must
+ * A deliberate chord started 180 ms in - short of the 200 ms term. It must
  * still produce the symbol, resolving on the target key's release rather than
  * waiting out the timer. This is what makes a long tapping term free.
  */

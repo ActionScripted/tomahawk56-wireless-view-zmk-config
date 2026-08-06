@@ -67,10 +67,9 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
          *   quick-tap-ms         a doubled letter ("ss", "ll") stays typing
          *   require-prior-idle   a key pressed mid-burst cannot start a layer
          *
-         * The tapping term governs only the key held alone, and is long on
-         * purpose: the hold is &mo and emits no keycode, so a dwell past the
-         * term silently eats the letter. Chords resolve on release, so a long
-         * term costs them nothing.
+         * The tapping term governs only the key held alone. Keep it long enough
+         * for a lazy word-initial letter, while avoiding unnecessary layer
+         * activation delay.
          *
          * Do not add hold-trigger-on-release: it defers the positional check to
          * the first key released, leaving it unarmed when a same-hand neighbour
@@ -82,7 +81,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "balanced";
-            tapping-term-ms = <250>;
+            tapping-term-ms = <200>;
             quick-tap-ms = <200>;
             require-prior-idle-ms = <100>;
             hold-trigger-key-positions = <
@@ -98,7 +97,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "balanced";
-            tapping-term-ms = <250>;
+            tapping-term-ms = <200>;
             quick-tap-ms = <200>;
             require-prior-idle-ms = <100>;
             hold-trigger-key-positions = <
@@ -110,21 +109,21 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             bindings = <&mo>, <&kp>;
         };
 
-        /* Active-layer interruptions cannot force Cmd. */
+        /* On active layers, a nested key tap resolves this thumb as Cmd. */
         cmd_tog: cmd_tog {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
+            flavor = "balanced";
             tapping-term-ms = <225>;
             quick-tap-ms = <125>;
             bindings = <&kp>, <&tog>;
         };
 
         /*
-         * Tab/Ctrl, Bspc/Shift, Enter/Option. Tap-preferred: the timer is the
-         * only route to the modifier, so nothing you type can force one, and
-         * every chord costs the full term. Balanced was tried and reverted -
-         * see tests/thumb-mod/4-correction-burst.
+         * Tab/Ctrl, Bspc/Shift, Enter/Option. Balanced resolves a deliberate
+         * chord when the other key is released while the thumb remains down,
+         * without waiting out the tapping term. A roll where the thumb comes
+         * up first remains a tap.
          *
          * No require-prior-idle here: on Shift, Ctrl or Option it would turn a
          * quick intentional hold right after typing into a stray Bspc, Tab or
@@ -133,18 +132,18 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         safe_mt: safe_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
+            flavor = "balanced";
             tapping-term-ms = <175>;
             quick-tap-ms = <200>;
             bindings = <&kp>, <&kp>;
         };
 
-        /* Space, with Cmd only by holding past the term. The prior-idle guard
-         * is affordable here because Space is part of continuous typing. */
+        /* Space/Cmd uses the same fast nested-chord resolution. The prior-idle
+         * guard keeps a Space pressed during continuous typing as a tap. */
         safe_space_mt: safe_space_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "tap-preferred";
+            flavor = "balanced";
             tapping-term-ms = <225>;
             quick-tap-ms = <200>;
             require-prior-idle-ms = <150>;

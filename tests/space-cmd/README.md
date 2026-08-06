@@ -1,7 +1,7 @@
 # Space/Cmd behavior tests
 
 Regression tests for `safe_space_mt` (`config/tomahawk56.keymap`): Space on tap,
-Cmd only by holding past the tapping term, and fast typing can never misfire Cmd.
+Cmd when a key is tapped inside the thumb hold or the tapping term wins.
 
 Run with `make test`. Each case uses ZMK's snapshot test format
 (`zmk/app/tests`): `native_sim.keymap` feeds timed key events into the firmware
@@ -12,7 +12,7 @@ diffed against `keycode_events.snapshot`, and any difference fails the case.
 | Case | Scenario | Expectation |
 | --- | --- | --- |
 | 1-fast-roll-through | space↓ A↓ space↑ A↑ in 70 ms | "space a", no Cmd |
-| 2-fast-roll-nested | A tapped fully inside a space press | "space a", no Cmd |
+| 2-fast-nested-chord | A tapped fully inside a space press | Cmd+A without waiting for the term |
 | 3-typing-streak-long-press | space pressed 60 ms after a tap, held 600 ms | instant Space, no Cmd |
 | 4-deliberate-cmd-chord | space held alone 600 ms, then A | Cmd+A chord |
 | 5-tap-then-hold-repeat | tap space, re-press 60 ms later, hold | Space auto-repeat |

@@ -1,11 +1,8 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * A complete A tap nested inside the thumb press must remain a thumb tap.
- *
- * This is the case that sent safe_mt back to tap-preferred. Under balanced it
- * resolved on A's release and produced Shift+A, which showed up on hardware as
- * a capital letter in the middle of a Backspace correction burst.
+ * A complete A tap nested inside the thumb press is an intentional fast chord.
+ * Balanced resolves Shift on A's release without waiting for the timer.
  */
 &kscan {
     events = <

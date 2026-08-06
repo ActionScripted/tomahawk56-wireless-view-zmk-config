@@ -5,19 +5,18 @@ Enter/Option. Backspace/Shift stands in for all six keys — same timing and
 resolution, only the keycodes differ. Space has its own `safe_space_mt`, covered
 by `tests/space-cmd/`.
 
-`safe_mt` is tap-preferred: an interrupting key never contributes to the
-decision, so the timer is the only path to the modifier, and every chord costs a
-full tapping term.
+`safe_mt` is balanced: a key pressed and released while the thumb remains down
+resolves the modifier immediately, without waiting for the tapping term. A roll
+where the thumb is released before the letter remains a tap.
 
 | Case | Pins |
 |---|---|
 | 1 fast-roll-through | thumb released first is a plain tap, never a modifier |
-| 2 fast-nested-roll | a letter tapped *inside* the thumb press is still a tap |
-| 3 deliberate-shift-chord | the thumb held alone past the term is the modifier |
-| 4 correction-burst | a re-pressed thumb outside the quick-tap window stays a tap |
+| 2 fast-nested-chord | a letter tapped *inside* the thumb press gets Shift |
+| 3 timer-resolved-shift | a thumb held alone past the term is also the modifier |
+| 4 correction-burst | documents the fast-chord tradeoff after a Backspace re-press |
 
-Cases 2 and 4 exist because `safe_mt` was briefly balanced. It was reverted from
-hardware: in a Backspace correction burst, a letter rolled inside a second
-Backspace press came out capitalised after the delete, with the re-press outside
-the quick-tap window. If thumb chords ever need to be faster, balanced is the
-lever and these two cases are what it costs.
+Case 4 documents the tradeoff: in a Backspace correction burst, a letter rolled
+fully inside a second Backspace press is treated as an intentional Shift chord
+when the re-press falls outside the quick-tap window. Releasing Backspace before
+the letter preserves the normal lowercase typing roll covered by case 1.

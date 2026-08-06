@@ -87,10 +87,12 @@ Five layers, derived from the Dygma Defy "Cruiser" layout:
 - Squeeze either half's two lower outer keys together for Settings (below).
 
 The thumbs tap Tab, Backspace, Space, and Enter; holding them produces Ctrl,
-Shift, Cmd, and Option respectively, mirrored on both halves. All thumbs are
-tap-preferred, so no interrupting key can force a modifier — and no thumb
-repeats its tap keycode by being held. To repeat Space or Backspace, tap it and
-re-press within the quick-tap window.
+Shift, Cmd, and Option respectively, mirrored on both halves. They use balanced
+hold-taps: press the thumb, tap and release the chord key, then release the
+thumb. The modifier resolves as soon as the chord key comes up instead of
+waiting for the tapping term. A typing roll where the thumb comes up first
+remains a tap. To repeat Space or Backspace, tap it and re-press within the
+quick-tap window.
 
 ## Settings
 
