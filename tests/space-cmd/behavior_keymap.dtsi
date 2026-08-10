@@ -1,6 +1,8 @@
 /*
- * Mirror of safe_space_mt from config/tomahawk56.keymap: Space on tap,
- * Cmd (LGUI) for a nested chord or a hold past the tapping term.
+ * Mirror of safe_space_mt from config/tomahawk56.keymap: Space on tap, Cmd
+ * (LGUI) for a nested chord or a hold past the tapping term. Keep the timings
+ * identical: a drifted mirror passes while describing a keyboard that does not
+ * exist.
  */
 
 #include <dt-bindings/zmk/keys.h>

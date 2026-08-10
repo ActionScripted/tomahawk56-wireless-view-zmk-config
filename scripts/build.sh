@@ -1,9 +1,7 @@
 #!/usr/bin/env bash
-# Local ZMK build: same `west init`/`update`/`build` calls zmkfirmware/zmk's
-# build-user-config.yml reusable workflow runs in CI (the workflow this repo's
-# .github/workflows/build.yml calls). Invoked via `make` inside the
-# zmk-build-arm container (see compose.yaml) - not meant to run bare on the
-# host, since it expects `west` + the Zephyr toolchain already on PATH.
+# Local ZMK build, mirroring the west calls that build-user-config.yml makes in
+# CI. Run via `make` inside the zmk-build-arm container (see compose.yaml); it
+# expects `west` and the Zephyr toolchain already on PATH.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -17,13 +15,12 @@ require_init() {
     echo "No .west workspace - run 'make init' first." >&2
     exit 1
   }
-  # Each `make` target runs in its own throwaway container, and zephyr-export
-  # writes its CMake package registration outside /workspace, so it does not
-  # survive between runs. Re-run it every time; it's cheap.
+  # Each `make` target gets a throwaway container, and zephyr-export writes its
+  # CMake package registration outside /workspace. Cheap, so just redo it.
   west zephyr-export
 }
 
-# Board and shield combinations must match build.yaml (the CI matrix).
+# Board and shields must match build.yaml (the CI matrix).
 BOARD="mikoto@7.3.0//zmk"
 
 build() {

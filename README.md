@@ -26,8 +26,8 @@ make flash   # left, then right
 Just one half: `make flash-left` / `make flash-right`. Details: `make help`, `scripts/flash.sh`.
 
 Flashing a newly built image drops any keymap saved from ZMK Studio, so the board
-always comes up running exactly what was built. Bluetooth pairings and the rest
-of the settings partition are untouched; `make flash-reset` wipes those too.
+comes up running exactly what was built. Bluetooth pairings and the rest of the
+settings partition are untouched; `make flash-reset` wipes those too.
 
 ## Testing
 
@@ -48,9 +48,9 @@ Runs via `mise` (`.mise.toml`); `lefthook` runs the same checks on `git commit` 
 
 ## Editing the keymap
 
-- **[customkeymap.com](https://customkeymap.com/) (recommended)**: web-based ZMK keymap visualizer/editor. Point it at this repo (owner/repo or a direct `.keymap` link), click keys to change bindings/layers/behaviors/combos, and commit straight back to GitHub — or export SVG/PNG or a `.keymap` file. No install required.
+- **[customkeymap.com](https://customkeymap.com/) (recommended)**: web-based visualizer/editor. Point it at this repo (owner/repo or a direct `.keymap` link), click keys to change bindings/layers/behaviors/combos, and commit straight back to GitHub — or export SVG/PNG or a `.keymap` file.
 - [keymap-editor](https://nickcoutsos.github.io/keymap-editor/): web app, GitHub OAuth, commits straight to this repo.
-- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half, studio-rpc enabled). **Saving writes to the board's settings flash, not to this repo, and those bindings then override the compiled keymap on every boot** — they last until the next firmware flash clears them (see Diagnostics), so anything worth keeping belongs in `config/tomahawk56.keymap`. Locked by default; unlock with the orange key on the Settings layer (`&studio_unlock`).
+- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half). **Saving writes to the board's settings flash, not to this repo, and those bindings then override the compiled keymap on every boot** (see Diagnostics), so anything worth keeping belongs in `config/tomahawk56.keymap`. Locked by default; unlock with the orange key on the Settings layer (`&studio_unlock`).
 - Directly: `config/tomahawk56.keymap` (ASCII layer diagrams in comments)
 
 ## Diagnostics

@@ -18,15 +18,13 @@
 #define L_MAGIC 3
 #define L_SET   4
 
-/* Slightly quicker ramp-up for Magic-layer cursor movement; scrolling keeps
- * ZMK's stock behavior for now. */
+/* Quicker ramp-up for Magic-layer cursor movement; scrolling stays stock. */
 &mmv {
     time-to-max-speed-ms = <250>;
 };
 
-/* RGB and output commands are routed through lrgb_sync so the press itself
- * repaints the key; 0x100/0x200 are the param1 ranges decoded in
- * config/src/tomahawk56_layer_rgb.c. */
+/* RGB and output commands route through lrgb_sync so the press itself repaints
+ * the key. The param1 ranges are decoded in config/src/tomahawk56_layer_rgb.c. */
 #define LRGB(cmd) &lrgb_sync (0x100 + (cmd)) 0
 #define LOUT(cmd) &lrgb_sync (0x200 + (cmd)) 0
 
@@ -57,19 +55,13 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 
         /*
          * Tap the letter, hold for the layer. One behavior per hand, because
-         * each triggers only from positions on the other hand.
-         *
-         * Each guard covers a distinct misfire; all are pinned by cases in
-         * tests/home-row-layer:
+         * each triggers only from positions on the other hand. Each guard
+         * covers a distinct misfire, all pinned by tests/home-row-layer:
          *
          *   balanced             a chord resolves on the target key's release
          *   positional triggers  a same-hand neighbour forces a tap
          *   quick-tap-ms         a doubled letter ("ss", "ll") stays typing
          *   require-prior-idle   a key pressed mid-burst cannot start a layer
-         *
-         * The tapping term governs only the key held alone. Keep it long enough
-         * for a lazy word-initial letter, while avoiding unnecessary layer
-         * activation delay.
          *
          * Do not add hold-trigger-on-release: it defers the positional check to
          * the first key released, leaving it unarmed when a same-hand neighbour
@@ -121,16 +113,14 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 
         /*
          * Tab/Ctrl, Bspc/Shift, Enter/Option. Balanced resolves a deliberate
-         * chord when the other key is released while the thumb remains down,
-         * without waiting out the tapping term. A roll where the thumb comes
-         * up first remains a tap.
+         * chord as soon as the other key is released while the thumb is still
+         * down; a roll where the thumb comes up first stays a tap.
          *
-         * require-prior-idle stays short here. Its job is the correction burst:
-         * a thumb pressed mid-typing, with the next letter pressed and released
-         * before the thumb comes up, otherwise resolves as a modifier and eats
-         * the Bspc. A large value would instead eat a deliberate hold taken
-         * right after a word, turning Shift, Ctrl or Option into a stray Bspc,
-         * Tab or Enter - so this is set to roughly one keystroke interval.
+         * require-prior-idle is roughly one keystroke interval - just enough to
+         * keep a correction burst (thumb pressed mid-typing, next letter tapped
+         * before the thumb rises) from eating the Bspc. Any larger and a
+         * deliberate hold right after a word turns Shift/Ctrl/Option into a
+         * stray Bspc/Tab/Enter.
          */
         safe_mt: safe_mod_tap {
             compatible = "zmk,behavior-hold-tap";
@@ -142,8 +132,8 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             bindings = <&kp>, <&kp>;
         };
 
-        /* Space/Cmd uses the same fast nested-chord resolution. The prior-idle
-         * guard keeps a Space pressed during continuous typing as a tap. */
+        /* Same resolution for Space/Cmd, with a longer prior-idle guard so a
+         * Space pressed during continuous typing stays a tap. */
         safe_space_mt: safe_space_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
@@ -204,7 +194,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         /*
          * Settings, one-handed from either half. Both positions are &none on
          * every layer, so no typing roll can reach the pair - hence no
-         * prior-idle guard and a loose timeout. Listed on L_SET too, so the
+         * prior-idle guard and a loose timeout. Listed on L_SET too so the
          * same squeeze toggles back out.
          */
         settings_left {
@@ -220,7 +210,6 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             bindings = <&tog L_SET>;
             layers = <L_BASE L_SET>;
         };
-
     };
 
     keymap {
@@ -235,10 +224,8 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 // | SET  |  Z  |  X  |   C   |   V   |  B  |        |  N  |  M  |   ,   |   .   |  /  | SET  |
 //              |TAB/C|BSPC/S |SPACE/G|ESC/A  |      |ENTER/A|SPACE/G|BSPC/S|TAB/C |
 //
-// SET marks the outer pairs that enter Settings; squeeze the two on either
-// half. They are dead on their own.
-//
-// No thumb repeats its tap keycode by being held - a hold is the modifier. To
+// SET marks the outer pairs that enter Settings, squeezed two at a time; they
+// are dead on their own. No thumb repeats its tap keycode by being held - to
 // repeat Space or Bspc, tap and re-press within quick-tap-ms.
             bindings = <
 &none        &kp N1  &kp N2                    &kp N3                   &kp N4                  &kp N5       &kp N6  &kp N7                    &kp N8                   &kp N9                  &kp N0                  &none
@@ -301,9 +288,9 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         };
 
         /*
-         * Latched, not held, so both hands are free for multi-tap work like
+         * Latched, not held, so both hands stay free for multi-tap work like
          * stepping through profiles. Unused positions are &none rather than
-         * &trans: while the mode is on the board types nothing. The RGB map is
+         * &trans: while the layer is on the board types nothing. The RGB map is
          * the legend (see the README).
          *
          * &bootloader is event-source local, so each half's own key reflashes
@@ -324,10 +311,8 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 // The profile keys have to stay on the number row: rgbled-widget finds &bt
 // BT_SEL bindings and paints its own connect/advertise indicator on them with a
 // position-to-pixel formula that only agrees with our LED map on this row (see
-// main_pixels in tomahawk56_layer_rgb.c).
-//
-// RGB sits a row away from the profiles so a slip while walking brightness
-// cannot switch profile and drop the connection.
+// main_pixels in config/src/tomahawk56_layer_rgb.c). RGB sits a row away so a slip
+// while walking brightness cannot switch profile and drop the connection.
             bindings = <
 &bootloader     &bt BT_SEL 0   &bt BT_SEL 1       &bt BT_SEL 2       &bt BT_SEL 3       &bt BT_CLR_ALL  &none  &none  &none  &none  &none  &bootloader
 &studio_unlock  LOUT(OUT_USB)  LOUT(OUT_BLE)      &none              &none              &none           &none  &none  &none  &none  &none  &none

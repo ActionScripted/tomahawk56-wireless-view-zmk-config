@@ -1,7 +1,4 @@
-# Default target
 .DEFAULT_GOAL := help
-
-# Phony (non-file) targets
 .PHONY: setup init update build build-left build-right build-reset test clean flash flash-left flash-right flash-reset live-keymap clear-pinned-keymap lint lint-shell lint-yaml hooks help
 
 help: ## Show available commands
@@ -84,7 +81,7 @@ clear-pinned-keymap: ## Delete Studio-saved bindings so the built keymap wins ag
 	@./scripts/live-keymap.py --clear
 
 # ---
-# LINT (mise tasks defined in .mise.toml; lefthook's pre-commit hook calls them directly too)
+# LINT (mise tasks from .mise.toml; lefthook's pre-commit hook calls them too)
 
 hooks: ## Install git hooks (included in `make setup`)
 	@lefthook install

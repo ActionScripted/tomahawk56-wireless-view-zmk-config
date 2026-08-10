@@ -4,8 +4,8 @@
  * one behavior with a single opposite-hand trigger key stands in for both:
  * position 1 is "the other hand", positions 2 and 3 are "this hand".
  *
- * Keep every timing here identical to the production node. A drifted mirror
- * makes the suite pass while describing a keyboard that does not exist.
+ * Keep the timings identical: a drifted mirror passes while describing a
+ * keyboard that does not exist.
  */
 
 #include <dt-bindings/zmk/keys.h>

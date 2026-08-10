@@ -16,7 +16,6 @@ where the thumb is released before the letter remains a tap.
 | 3 timer-resolved-shift | a thumb held alone past the term is also the modifier |
 | 4 correction-burst | documents the fast-chord tradeoff after a Backspace re-press |
 
-Case 4 documents the tradeoff: in a Backspace correction burst, a letter rolled
-fully inside a second Backspace press is treated as an intentional Shift chord
-when the re-press falls outside the quick-tap window. Releasing Backspace before
-the letter preserves the normal lowercase typing roll covered by case 1.
+Case 4 is the tradeoff: in a correction burst, a letter rolled fully inside a
+second Backspace press becomes a Shift chord once the re-press falls outside the
+quick-tap window. Releasing Backspace first keeps the normal typing roll (case 1).

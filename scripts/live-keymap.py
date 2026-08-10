@@ -5,15 +5,14 @@ Bindings saved from ZMK Studio outrank the firmware: `keymap_handle_set()` in
 zmk/app/src/keymap.c reapplies them over `zmk_keymap` on every boot, and a
 reflash does not dislodge them.
 
-Talks to the left/central half over the Studio RPC UART exposed by the
-`studio-rpc-usb-uart` snippet. Reporting is read-only (keymap.get_keymap only).
+Talks to the left/central half over the Studio RPC UART from the
+`studio-rpc-usb-uart` snippet. Reporting is read-only; --clear also sends
+core.reset_settings to drop the saved bindings, which leaves Bluetooth pairings
+alone, then re-reads the keymap to confirm.
+
 Positions are compared by parameters, not by behavior, so two parameterless
 behaviors look alike - fine for catching pinned bindings, which always carry
 parameters.
-
---clear additionally sends core.reset_settings, which drops the saved bindings
-and reloads the compiled keymap, leaving Bluetooth pairings alone. It then
-re-reads the keymap to confirm the board matches the build.
 
 Usage:  scripts/live-keymap.py [--clear] [/dev/cu.usbmodemXXXX]
 """
@@ -29,7 +28,7 @@ LAYER_NODES = ("base_layer", "symbols_layer", "functional_layer", "magic_layer",
                "settings_layer")
 
 
-# --- Studio RPC framing (mirrors zmk/app/src/studio/msg_framing.c) ---------
+# --- Studio RPC framing (mirrors zmk/app/src/studio/msg_framing.c) ---
 
 
 def frame(payload):
@@ -63,7 +62,7 @@ def unframe(data):
             state = "data"
 
 
-# --- minimal protobuf reader (no dependencies) ----------------------------
+# --- minimal protobuf reader (no dependencies) ---
 
 
 def _varint(data, i):
@@ -110,7 +109,7 @@ def zigzag(n):
     return (n >> 1) ^ -(n & 1)
 
 
-# --- the two keymaps ------------------------------------------------------
+# --- the two keymaps ---
 
 
 def compiled_keymap():
@@ -188,6 +187,19 @@ def default_port():
     return ports[0]
 
 
+def running_binding(msg):
+    """(behavior_id, param1, param2) out of one live Binding submessage."""
+    bid = p1 = p2 = 0
+    for fn, v in fields(msg):
+        if fn == 1:
+            bid = zigzag(v)
+        elif fn == 2:
+            p1 = v
+        elif fn == 3:
+            p2 = v
+    return bid, p1, p2
+
+
 def report(port, compiled):
     """Print the live-vs-built diff. Returns the number of differing positions."""
     km = live_keymap(port)
@@ -197,13 +209,39 @@ def report(port, compiled):
             "  - Is this the LEFT half? Only the central runs the keymap and the RPC UART.\n"
             "  - If Studio locking is enabled, tap the &studio_unlock key first."
         )
-    return _diff(km, compiled)
+
+    names = list(compiled)
+    total = 0
+
+    for index, layer in enumerate([v for fn, v in fields(km) if fn == 1]):
+        if index >= len(names):
+            break
+        label = (field(layer, 2) or b"").decode()
+        built = compiled[names[index]]
+        diffs = []
+
+        for pos, msg in enumerate([v for fn, v in fields(layer) if fn == 3]):
+            if pos >= len(built):
+                continue
+            bid, p1, p2 = running_binding(msg)
+            cbeh, cp1, cp2 = built[pos]
+            if (p1, p2) != (cp1, cp2):
+                diffs.append(f"  position {pos:>2}: running(behavior_id={bid}, "
+                             f"0x{p1:05x}, 0x{p2:05x})  !=  built({cbeh} "
+                             f"0x{cp1:05x} 0x{cp2:05x})")
+
+        total += len(diffs)
+        status = "matches the build" if not diffs else f"{len(diffs)} OVERRIDDEN"
+        print(f"\nlayer {index} '{label}': {status}")
+        for line in diffs:
+            print(line)
+
+    return total
 
 
 def main():
-    args = [a for a in sys.argv[1:]]
-    clear = "--clear" in args
-    args = [a for a in args if a != "--clear"]
+    args = [a for a in sys.argv[1:] if a != "--clear"]
+    clear = "--clear" in sys.argv[1:]
     port = args[0] if args else default_port()
     print(f"Reading the running keymap from {port} ...")
 
@@ -239,42 +277,6 @@ def main():
     else:
         sys.exit(f"{remaining} position(s) still differ - reset did not fully "
                  f"apply. Fall back to 'make flash-reset'.")
-
-
-def _diff(km, compiled):
-    names = list(compiled)
-    total = 0
-
-    for index, layer in enumerate([v for fn, v in fields(km) if fn == 1]):
-        if index >= len(names):
-            break
-        label = (field(layer, 2) or b"").decode()
-        binds = [v for fn, v in fields(layer) if fn == 3]
-        comp = compiled[names[index]]
-        diffs = []
-        for pos, b in enumerate(binds):
-            bid = p1 = p2 = 0
-            for fn, v in fields(b):
-                if fn == 1:
-                    bid = zigzag(v)
-                elif fn == 2:
-                    p1 = v
-                elif fn == 3:
-                    p2 = v
-            if pos >= len(comp):
-                continue
-            cbeh, cp1, cp2 = comp[pos]
-            if (p1, p2) != (cp1, cp2):
-                diffs.append(f"  position {pos:>2}: running(behavior_id={bid}, "
-                             f"0x{p1:05x}, 0x{p2:05x})  !=  built({cbeh} "
-                             f"0x{cp1:05x} 0x{cp2:05x})")
-        total += len(diffs)
-        status = "matches the build" if not diffs else f"{len(diffs)} OVERRIDDEN"
-        print(f"\nlayer {index} '{label}': {status}")
-        for line in diffs:
-            print(line)
-
-    return total
 
 
 if __name__ == "__main__":

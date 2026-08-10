@@ -1,13 +1,11 @@
-# Stamps the firmware with an id that changes every time it is built, so the
-# board can tell "an image I have already run" from "an image that was just
-# flashed" (see src/tomahawk56_studio_reset.c).
+# Stamps the firmware with an id that changes on every build, so the board can
+# tell "an image I have already run" from "an image that was just flashed" (see
+# src/tomahawk56_studio_reset.c). The id is the build's Unix timestamp: it fits
+# a uint32 and reads back as a build time in the log line the reset prints.
 #
 # Run as a script (cmake -P) from an always-out-of-date custom target, not at
-# configure time: CMake only reconfigures when a CMakeLists/Kconfig input
+# configure time - CMake only reconfigures when a CMakeLists/Kconfig input
 # changes, which would leave the id stale across ordinary rebuilds.
-#
-# The id is the build's Unix timestamp, which fits a uint32 and reads back as
-# a build time in the log line the reset prints.
 
 if(NOT DEFINED TOMAHAWK56_BUILD_ID_HEADER)
   message(FATAL_ERROR "TOMAHAWK56_BUILD_ID_HEADER must be set")

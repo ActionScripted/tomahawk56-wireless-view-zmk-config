@@ -1,21 +1,20 @@
 #!/usr/bin/env bash
-# Copies a built .uf2 onto a connected UF2 bootloader drive, the way Zephyr's
-# own `west flash` uf2 runner does: find a FAT volume with INFO_UF2.TXT at its
-# root, refuse to guess if more than one matches, copy the file over. Runs on
-# the host, not through Docker, which on macOS cannot see the USB volume.
+# Copies a built .uf2 onto a connected UF2 bootloader drive the way `west flash`
+# does: find a FAT volume with INFO_UF2.TXT at its root, refuse to guess if more
+# than one matches, copy it over. Runs on the host - Docker on macOS cannot see
+# the USB volume.
 #
-# Bootloader mode is entered from the keymap, not a button: squeeze either
-# half's two lower outer keys for the Settings layer, then tap that half's top
-# outer corner. Layers resolve on the left/central half, so both halves must be
-# on for that shortcut.
+# Bootloader mode comes from the keymap, not a button: squeeze either half's two
+# lower outer keys for Settings, then tap that half's top outer corner. Layers
+# resolve on the left/central half, so both halves must be on.
 #
-# Avoids bash arrays on purpose: macOS still ships bash 3.2 by default, which
-# mishandles "${arr[@]}" on an empty array under `set -u`.
+# No bash arrays on purpose: macOS ships bash 3.2, which mishandles
+# "${arr[@]}" on an empty array under `set -u`.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
-# Volume name the mikoto's UF2 bootloader mounts under. Used as a fallback
-# match: macOS can expose the mountpoint before the FAT contents are listable.
+# Fallback match for the mount: macOS can expose the mountpoint before the FAT
+# contents are listable.
 BOOTLOADER_VOLUME_PREFIX="MIKOTO-BOOT"
 
 is_mountpoint() {
@@ -41,11 +40,9 @@ find_unmounted_uf2_disk() {
     awk -v name="$BOOTLOADER_VOLUME_PREFIX" '$0 ~ name { print $NF; exit }'
 }
 
-# macOS sometimes fails to auto-mount the bootloader's FAT volume even though
-# the USB disk enumerates (visible in `diskutil list` but absent from
-# /Volumes). If a disk carrying the bootloader volume name is sitting there
-# unmounted, mount it ourselves. Rate-limited so a disk macOS simply won't
-# mount doesn't get retried every second for the whole timeout.
+# macOS sometimes fails to auto-mount the bootloader volume even though the USB
+# disk enumerates. Mount it ourselves, rate-limited so a disk macOS simply will
+# not mount is not retried every second for the whole timeout.
 RESCUE_TRIES=0
 RESCUE_MAX_TRIES=3
 
@@ -144,9 +141,8 @@ copy_uf2_with_retries() {
       return 0
     fi
 
-    # The bootloader reboots the instant the final UF2 block lands, which can
-    # yank the drive out from under cp and make a successful flash look like
-    # an I/O error. If the mount is gone, the board took the image.
+    # The bootloader reboots the instant the final UF2 block lands, yanking the
+    # drive out from under cp. If the mount is gone, the board took the image.
     sleep 2
     if [ ! -d "$mount" ]; then
       echo "==> $mount vanished mid-copy - board rebooted with the new image."
@@ -163,8 +159,8 @@ copy_uf2_with_retries() {
 
 # macOS 15.4+ moved msdos mounting to FSKit, which sometimes misparses the
 # bootloader's virtual FAT: the disk enumerates, `diskutil info` reports a
-# 0-byte volume, and mounting fails. Nothing this script can do fixes it -
-# the mount daemon has to be restarted, which in practice means a reboot.
+# 0-byte volume, and mounting fails. Only a mount daemon restart fixes it,
+# which in practice means a reboot.
 report_unmountable_disk() {
   local id="$1"
   cat >&2 <<EOF
@@ -222,8 +218,8 @@ flash_one() {
   done
 
   echo "==> $target done."
-  # The image clears the saved Studio keymap on its first boot (see
-  # CONFIG_TOMAHAWK56_STUDIO_RESET_ON_FLASH); only the central half stores one.
+  # Only the central half stores a Studio keymap, which the new image drops on
+  # its first boot (CONFIG_TOMAHAWK56_STUDIO_RESET_ON_FLASH).
   [ "$target" = "left" ] &&
     echo "    Its first boot drops any keymap saved from ZMK Studio. Bluetooth pairings are kept."
   return 0

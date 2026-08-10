@@ -31,8 +31,8 @@ LOG_MODULE_DECLARE(zmk, CONFIG_ZMK_LOG_LEVEL);
 
 #define BUILD_ID_SETTINGS_KEY "tomahawk56/build_id"
 
-// Zero until a stored id is loaded, which no build id can be (it is a Unix
-// timestamp), so an unset id reads as "this image has not run here before".
+/* Zero until a stored id is loaded, which no build id can be (it is a Unix
+ * timestamp), so an unset id reads as "this image has not run here before". */
 static uint32_t last_booted_build_id;
 
 static int build_id_set(const char *name, size_t len, settings_read_cb read_cb, void *cb_arg) {
@@ -60,7 +60,7 @@ static int build_id_commit(void) {
 
     int ret = zmk_keymap_reset_settings();
     if (ret < 0) {
-        // Leave the stored id alone so the next boot retries the reset.
+        /* Leave the stored id alone so the next boot retries the reset. */
         LOG_ERR("Failed to reset the saved keymap: %d", ret);
         return 0;
     }
@@ -68,7 +68,7 @@ static int build_id_commit(void) {
     const uint32_t build_id = TOMAHAWK56_BUILD_ID;
     ret = settings_save_one(BUILD_ID_SETTINGS_KEY, &build_id, sizeof(build_id));
     if (ret < 0) {
-        // Harmless on its own: the reset just runs again on the next boot.
+        /* Harmless on its own: the reset just runs again on the next boot. */
         LOG_ERR("Failed to store the build id: %d", ret);
     }
 

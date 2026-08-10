@@ -1,8 +1,7 @@
 /*
- * The upstream settings_reset shield has one keymap binding, but declares a
- * 1x0 mock scan matrix. Give that mock matrix one logical position so ZMK does
- * not generate zero-length keymap arrays. The mock scanner still has no events,
- * so this does not add an input or change the settings-reset behavior.
+ * The upstream settings_reset shield has one keymap binding but declares a 1x0
+ * mock scan matrix. Give that matrix one logical position so ZMK does not
+ * generate zero-length keymap arrays. The mock scanner still emits no events.
  */
 
 &settings_reset_kscan {

@@ -37,29 +37,23 @@
 #define LRGB_CONNECT_ATTEMPTS 8
 
 /*
- * lrgb_sync behavior param1 encoding. The behavior is global, so one binding
- * carries two kinds of traffic:
- *   0x000-0x0FF  state sync sent central -> peripheral: param1 is the active
- *                layer, param2 is brightness with the on/off flag in BIT(8).
- *                Sent from the work handler below; never bound in the keymap.
- *   0x100-0x1FF  RGB underglow control command (RGB_TOG etc.), forwarded to
- *                &rgb_ug. Must match the LRGB() macro in tomahawk56.keymap.
- *   0x200-0x2FF  output selection command (OUT_USB etc.), forwarded to &out on
- *                the central. Must match the LOUT() macro in tomahawk56.keymap.
+ * The behavior is global, so one binding carries three kinds of param1:
+ *   0x000-0x0FF  state sync, central -> peripheral: param1 is the active layer,
+ *                param2 the brightness with the on/off flag in BIT(8). Sent by
+ *                the work handler below; never bound in the keymap.
+ *   0x100-0x1FF  RGB underglow command, forwarded to &rgb_ug (LRGB() in the keymap).
+ *   0x200-0x2FF  output command, forwarded to &out on the central (LOUT()).
  */
 #define LRGB_CONTROL_BASE 0x100
 #define LRGB_OUTPUT_BASE 0x200
 
-/* Keep in sync with L_SET in tomahawk56.keymap. The Settings layer is the only
- * one whose map is not purely static: the Bluetooth profile row reports which
- * profile is selected. The four &bt BT_SEL keys are the number row's cols 1-4;
- * col 5 is BT_CLR_ALL and must never be recolored as a profile. */
+/* Settings is the only map that is not purely static: the Bluetooth profile row
+ * and the USB/BLE pair report what is selected. Col 5 of the profile row is
+ * BT_CLR_ALL and must never be recolored as a profile. */
 #define LRGB_SETTINGS_LAYER 4
 #define LRGB_BT_ROW 0
 #define LRGB_BT_FIRST_COL 1
 #define LRGB_BT_PROFILE_COUNT 4
-
-/* The USB/BLE pair on the second row; the selected one is repainted green. */
 #define LRGB_OUT_ROW 1
 #define LRGB_OUT_USB_COL 1
 #define LRGB_OUT_BLE_COL 2
@@ -70,6 +64,12 @@
 
 BUILD_ASSERT(MAIN_KEY_COUNT + THUMB_COUNT == LED_COUNT,
              "the LED chain is the 24 main keys followed by the 4 thumbs");
+BUILD_ASSERT(LRGB_BT_FIRST_COL + LRGB_BT_PROFILE_COUNT <= MAIN_COLS,
+             "the profile keys must fit the row without reaching BT_CLR_ALL");
+/* Underglow rejects an out-of-range pixel index, and this handler would retry
+ * that rejection every LRGB_RETRY_MS forever. Catch the mismatch at build time. */
+BUILD_ASSERT(LED_COUNT == DT_PROP(DT_CHOSEN(zmk_underglow), chain_length),
+             "LED_COUNT must match the led_strip chain-length in tomahawk56.keymap");
 
 enum key_color {
     COLOR_OFF,
@@ -86,22 +86,26 @@ enum key_color {
     COLOR_LIME,
 };
 
-/* Defy-inspired hues. Brightness is supplied by the user's underglow state. */
+/* Defy-inspired hues. Brightness comes from the user's underglow state. */
 static const struct zmk_led_hsb palette[] = {
-    [COLOR_OFF] = {0, 0, 0},       [COLOR_WHITE] = {0, 0, 100},
-    [COLOR_ORANGE] = {38, 100, 100}, [COLOR_TEAL] = {174, 100, 100},
-    [COLOR_YELLOW] = {55, 100, 100}, [COLOR_PURPLE] = {275, 85, 100},
-    [COLOR_GREEN] = {120, 100, 100}, [COLOR_RED] = {0, 100, 100},
-    [COLOR_BLUE] = {220, 100, 100}, [COLOR_MAGENTA] = {310, 100, 100},
-    /* Defy palette slot 7 is RGB (87, 164, 255). */
+    [COLOR_OFF] = {0, 0, 0},
+    [COLOR_WHITE] = {0, 0, 100},
+    [COLOR_ORANGE] = {38, 100, 100},
+    [COLOR_TEAL] = {174, 100, 100},
+    [COLOR_YELLOW] = {55, 100, 100},
+    [COLOR_PURPLE] = {275, 85, 100},
+    [COLOR_GREEN] = {120, 100, 100},
+    [COLOR_RED] = {0, 100, 100},
+    [COLOR_BLUE] = {220, 100, 100},
     [COLOR_LIGHT_BLUE] = {213, 66, 100},
+    [COLOR_MAGENTA] = {310, 100, 100},
     [COLOR_LIME] = {78, 100, 100},
 };
 
 /*
- * Per-layer color maps. Each row is left-to-right as seen by the user; the
- * central (left) and peripheral (right) halves each compile their own maps
- * under the same names.
+ * Per-layer color maps. Each row reads left-to-right as the user sees it; the
+ * central (left) and peripheral (right) halves compile their own maps under the
+ * same names.
  */
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 static const uint8_t base_main[MAIN_ROWS][MAIN_COLS] = {
@@ -132,14 +136,10 @@ static const uint8_t magic_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
 };
 
-/*
- * Settings reads as its own instrument panel: red is irreversible (the
- * bootloader corner and BT_CLR_ALL), blue is Bluetooth, white is the way out
- * (the entry pair and every thumb).
- */
+/* Red is irreversible (the bootloader corner and BT_CLR_ALL), blue is
+ * Bluetooth, orange is unlock, white is the way out. */
 static const uint8_t settings_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_RED, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_BLUE, COLOR_RED},
-    /* Unlock is orange; the selected output is repainted green at render time. */
     {COLOR_ORANGE, COLOR_TEAL, COLOR_LIGHT_BLUE, COLOR_OFF, COLOR_OFF, COLOR_OFF},
     {COLOR_WHITE, COLOR_OFF, COLOR_YELLOW, COLOR_YELLOW, COLOR_YELLOW, COLOR_OFF},
     {COLOR_WHITE, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_GREEN},
@@ -177,9 +177,8 @@ static const uint8_t magic_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_MAGENTA, COLOR_GREEN, COLOR_OFF},
 };
 
-/* Settings is a left-handed panel. The right half keeps only its own bootloader
- * corner and the white pair that toggles the layer; every other key is dark and
- * dead, so the right hand's whole job here is leaving. */
+/* Every Settings control lives on the left half; the right keeps its own
+ * bootloader corner and the white pair that toggles the layer. */
 static const uint8_t settings_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_RED},
     {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF},
@@ -187,7 +186,7 @@ static const uint8_t settings_main[MAIN_ROWS][MAIN_COLS] = {
     {COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_OFF, COLOR_WHITE},
 };
 
-/* The mirrored right thumb LED chain runs from Ctrl/Tab toward Opt/Enter. */
+/* Mirrored: the right thumb chain runs from Ctrl/Tab toward Opt/Enter. */
 static const uint8_t base_thumbs[THUMB_COUNT] = {
     COLOR_BLUE, COLOR_ORANGE, COLOR_MAGENTA, COLOR_GREEN};
 #endif
@@ -196,8 +195,7 @@ static const uint8_t base_thumbs[THUMB_COUNT] = {
 static const uint8_t settings_thumbs[THUMB_COUNT] = {
     COLOR_WHITE, COLOR_WHITE, COLOR_WHITE, COLOR_WHITE};
 
-/* Indexed by keymap layer number (see the L_* defines in tomahawk56.keymap).
- * Thumbs keep their Base role colors on every layer. */
+/* Indexed by keymap layer number (the L_* defines in tomahawk56.keymap). */
 static const uint8_t (*const main_maps[])[MAIN_COLS] = {
     base_main,
     symbols_main,
@@ -219,8 +217,8 @@ BUILD_ASSERT(ARRAY_SIZE(thumb_maps) == ARRAY_SIZE(main_maps),
 BUILD_ASSERT(LRGB_SETTINGS_LAYER < ARRAY_SIZE(main_maps),
              "LRGB_SETTINGS_LAYER must match L_SET in tomahawk56.keymap");
 
-/* Physical LED index for each main-key position of the map above. Both halves
- * chain the same way, top row starting at the outer column. */
+/* Physical LED index for each main-key position above. Both halves chain the
+ * same way, top row starting at the outer column. */
 static const uint8_t main_pixels[MAIN_ROWS][MAIN_COLS] = {
     {5, 4, 3, 2, 1, 0},
     {6, 7, 8, 9, 10, 11},
@@ -260,32 +258,22 @@ static const uint8_t *thumb_map_for_layer(uint8_t layer) {
 }
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-/*
- * The four Bluetooth profile keys are the central's own, so their state needs
- * no room in the split sync payload: the selected profile turns green once its
- * host is connected, white while it is still advertising, and the other three
- * stay blue.
- */
+/* The profile keys are the central's own, so their state needs no room in the
+ * sync payload: the selected profile turns green once its host is connected,
+ * white while it is still advertising, and the other three stay blue. */
 static void mark_active_bt_profile(void) {
     int active = zmk_ble_active_profile_index();
     if (active < 0 || active >= LRGB_BT_PROFILE_COUNT) {
         return;
     }
 
-    uint8_t col = LRGB_BT_FIRST_COL + active;
-    BUILD_ASSERT(LRGB_BT_FIRST_COL + LRGB_BT_PROFILE_COUNT <= MAIN_COLS,
-                 "the profile keys must fit the row without reaching BT_CLR_ALL");
-
-    colors[main_pixels[LRGB_BT_ROW][col]] =
+    colors[main_pixels[LRGB_BT_ROW][LRGB_BT_FIRST_COL + active]] =
         palette[zmk_ble_active_profile_is_connected() ? COLOR_GREEN : COLOR_WHITE];
 }
 
-/*
- * The selected output turns green; the other keeps its resting color. This
- * follows the *preferred* transport, not the one currently carrying traffic, so
+/* Follows the *preferred* transport, not the one currently carrying traffic, so
  * the key reports what you chose even when that transport is unavailable -
- * picking USB while unplugged still moves the light.
- */
+ * picking USB while unplugged still moves the light. */
 static void mark_active_output(void) {
     uint8_t col = (zmk_endpoint_get_preferred_transport() == ZMK_TRANSPORT_USB)
                       ? LRGB_OUT_USB_COL
@@ -299,14 +287,14 @@ static int render_layer(uint8_t layer, uint8_t brightness) {
     const uint8_t (*main_map)[MAIN_COLS] = main_map_for_layer(layer);
     const uint8_t *thumb_map = thumb_map_for_layer(layer);
 
-    for (uint8_t i = 0; i < LED_COUNT; i++) {
-        colors[i] = palette[COLOR_OFF];
-    }
-
     for (uint8_t row = 0; row < MAIN_ROWS; row++) {
         for (uint8_t col = 0; col < MAIN_COLS; col++) {
             colors[main_pixels[row][col]] = palette[main_map[row][col]];
         }
+    }
+
+    for (uint8_t thumb = 0; thumb < THUMB_COUNT; thumb++) {
+        colors[MAIN_KEY_COUNT + thumb] = palette[thumb_map[thumb]];
     }
 
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
@@ -315,10 +303,6 @@ static int render_layer(uint8_t layer, uint8_t brightness) {
         mark_active_output();
     }
 #endif
-
-    for (uint8_t thumb = 0; thumb < THUMB_COUNT; thumb++) {
-        colors[MAIN_KEY_COUNT + thumb] = palette[thumb_map[thumb]];
-    }
 
     for (uint8_t i = 0; i < LED_COUNT; i++) {
         if (colors[i].b > 0) {
@@ -369,6 +353,77 @@ BT_CONN_CB_DEFINE(tomahawk56_layer_rgb_conn_callbacks) = {
 };
 #endif
 
+/*
+ * What this half should be showing. The central reads it live; the peripheral
+ * only knows what the last sync payload told it. False means the underglow
+ * subsystem is not ready yet and the caller should come back.
+ */
+static bool current_state(uint8_t *layer, uint8_t *brightness, bool *underglow_on) {
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    if (zmk_rgb_underglow_get_state(underglow_on) < 0) {
+        return false;
+    }
+
+    *layer = zmk_keymap_highest_layer_active();
+    *brightness = zmk_rgb_underglow_calc_brt(0).b;
+#else
+    /* Render Base locally while the central connects and discovers services. */
+    if (!remote_initialized) {
+        if (zmk_rgb_underglow_get_state(&remote_on) < 0) {
+            return false;
+        }
+        remote_brightness = zmk_rgb_underglow_calc_brt(0).b;
+        remote_initialized = true;
+    }
+
+    *layer = remote_layer;
+    *brightness = remote_brightness;
+    *underglow_on = remote_on;
+#endif
+    return true;
+}
+
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+/* Push the state the peripheral cannot see for itself. Returns the delay to try
+ * again after, or 0 when the peripheral is up to date. */
+static uint32_t sync_state_to_peripheral(uint8_t layer, uint8_t brightness, bool underglow_on) {
+    if (layer == last_synced_layer && brightness == last_synced_brightness &&
+        underglow_on == last_synced_on) {
+        return 0;
+    }
+
+    struct zmk_behavior_binding binding = {
+        .behavior_dev = DEVICE_DT_NAME(DT_NODELABEL(lrgb_sync)),
+        .param1 = layer,
+        .param2 = brightness | (underglow_on ? BIT(8) : 0),
+    };
+    struct zmk_behavior_binding_event event = {.source = 0, .position = 0,
+                                               .timestamp = k_uptime_get()};
+
+    /* Claimed before the send for the same reason as the paint in the work
+     * handler, and the window is far wider here: the send blocks up to 100 ms
+     * on a full queue. */
+    last_synced_layer = layer;
+    last_synced_brightness = brightness;
+    last_synced_on = underglow_on;
+
+    if (zmk_split_central_invoke_behavior(0, &binding, event, true) != 0) {
+        last_synced_layer = UINT8_MAX;
+        return LRGB_RETRY_MS;
+    }
+
+    if (connect_sync_attempts > 0) {
+        connect_sync_attempts--;
+        if (connect_sync_attempts > 0) {
+            /* Queue acceptance is not a delivery acknowledgement. */
+            last_synced_layer = UINT8_MAX;
+            return LRGB_CONNECT_RETRY_MS;
+        }
+    }
+    return 0;
+}
+#endif
+
 static void layer_rgb_work_handler(struct k_work *work) {
     ARG_UNUSED(work);
     bool retry = false;
@@ -383,57 +438,20 @@ static void layer_rgb_work_handler(struct k_work *work) {
         startup_rgb_forced_on = true;
     }
 
-#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    uint8_t layer = 0;
+    uint8_t brightness = 0;
     bool underglow_on = false;
-    if (zmk_rgb_underglow_get_state(&underglow_on) < 0) {
+    if (!current_state(&layer, &brightness, &underglow_on)) {
         layer_rgb_schedule(K_MSEC(LRGB_RETRY_MS));
         return;
     }
 
-    uint8_t layer = zmk_keymap_highest_layer_active();
-    uint8_t brightness = zmk_rgb_underglow_calc_brt(0).b;
-
-    if (layer != last_synced_layer || brightness != last_synced_brightness ||
-        underglow_on != last_synced_on) {
-        struct zmk_behavior_binding binding = {
-            .behavior_dev = DEVICE_DT_NAME(DT_NODELABEL(lrgb_sync)),
-            .param1 = layer,
-            .param2 = brightness | (underglow_on ? BIT(8) : 0),
-        };
-        struct zmk_behavior_binding_event event = {.source = 0, .position = 0,
-                                                   .timestamp = k_uptime_get()};
-
-        if (zmk_split_central_invoke_behavior(0, &binding, event, true) == 0) {
-            last_synced_layer = layer;
-            last_synced_brightness = brightness;
-            last_synced_on = underglow_on;
-            if (connect_sync_attempts > 0) {
-                connect_sync_attempts--;
-                if (connect_sync_attempts > 0) {
-                    /* Queue acceptance is not a delivery acknowledgement. */
-                    last_synced_layer = UINT8_MAX;
-                    retry = true;
-                    retry_delay_ms = LRGB_CONNECT_RETRY_MS;
-                }
-            }
-        } else {
-            retry = true;
-        }
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    uint32_t sync_retry_ms = sync_state_to_peripheral(layer, brightness, underglow_on);
+    if (sync_retry_ms != 0) {
+        retry = true;
+        retry_delay_ms = sync_retry_ms;
     }
-#else
-    /* Render Base locally while the central connects and discovers services. */
-    if (!remote_initialized) {
-        if (zmk_rgb_underglow_get_state(&remote_on) < 0) {
-            layer_rgb_schedule(K_MSEC(LRGB_RETRY_MS));
-            return;
-        }
-        remote_brightness = zmk_rgb_underglow_calc_brt(0).b;
-        remote_initialized = true;
-    }
-
-    uint8_t layer = remote_layer;
-    uint8_t brightness = remote_brightness;
-    bool underglow_on = remote_on;
 #endif
 
     if (!underglow_on || brightness == 0) {
@@ -446,10 +464,19 @@ static void layer_rgb_work_handler(struct k_work *work) {
             }
         }
     } else if (!layer_channel_active || layer != last_layer || brightness != last_brightness) {
-        if (render_layer(layer, brightness) == 0) {
-            last_layer = layer;
-            last_brightness = brightness;
-        } else {
+        /*
+         * Claim the frame before painting it, never after. An invalidation
+         * raised while render_layer() runs then lands on top of the claim and
+         * survives; committing afterwards would overwrite it and drop the
+         * repaint. That is the only way a Settings-layer profile or endpoint
+         * change - which moves the colors without moving the layer number -
+         * can be lost.
+         */
+        last_layer = layer;
+        last_brightness = brightness;
+
+        if (render_layer(layer, brightness) != 0) {
+            last_layer = UINT8_MAX;
             retry = true;
         }
     }
@@ -473,11 +500,8 @@ ZMK_LISTENER(tomahawk56_layer_rgb, layer_rgb_listener);
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 ZMK_SUBSCRIPTION(tomahawk56_layer_rgb, zmk_layer_state_changed);
 
-/*
- * Profile selection and the active profile's connect/disconnect both raise this.
- * Only the Settings layer draws that state, and only on the central's own LEDs,
- * so nothing is invalidated or synced anywhere else.
- */
+/* Only the Settings layer draws profile and endpoint state, and only on the
+ * central's own LEDs, so nothing is invalidated or synced anywhere else. */
 static int layer_rgb_ble_listener(const zmk_event_t *event) {
     ARG_UNUSED(event);
     if (zmk_keymap_highest_layer_active() != LRGB_SETTINGS_LAYER) {
@@ -498,9 +522,9 @@ ZMK_SUBSCRIPTION(tomahawk56_layer_rgb_ble, zmk_endpoint_changed);
 
 static int layer_rgb_control_convert(struct zmk_behavior_binding *binding,
                                      struct zmk_behavior_binding_event event) {
-    /* Only keymap-bound control commands need relative-to-absolute conversion;
-     * the state sync range is built and sent by the work handler directly, and
-     * the output commands are already absolute. */
+    /* Only keymap-bound RGB commands need relative-to-absolute conversion: the
+     * state sync range is built by the work handler and output commands are
+     * already absolute. */
     if (binding->param1 < LRGB_CONTROL_BASE || binding->param1 >= LRGB_OUTPUT_BASE) {
         return 0;
     }
@@ -518,40 +542,38 @@ static int layer_rgb_control_convert(struct zmk_behavior_binding *binding,
     return err;
 }
 
+/* Press the behavior this payload really meant, with the range base stripped. */
+static int press_forwarded(const char *behavior_dev, uint32_t param1, uint32_t param2,
+                           struct zmk_behavior_binding_event event) {
+    struct zmk_behavior_binding forwarded = {
+        .behavior_dev = behavior_dev,
+        .param1 = param1,
+        .param2 = param2,
+    };
+    return behavior_keymap_binding_pressed(&forwarded, event);
+}
+
 static int layer_rgb_sync_pressed(struct zmk_behavior_binding *binding,
                                   struct zmk_behavior_binding_event event) {
     if (binding->param1 >= LRGB_OUTPUT_BASE) {
-        /*
-         * &out is central-only, and so is the key that shows which output is
-         * chosen; the peripheral is reached because this behavior is global,
-         * and has nothing to do with the payload.
-         */
+        /* &out and the key showing which output is chosen are both central-only;
+         * the peripheral is reached only because this behavior is global. */
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-        struct zmk_behavior_binding output = {
-            .behavior_dev = DEVICE_DT_NAME(DT_NODELABEL(out)),
-            .param1 = binding->param1 - LRGB_OUTPUT_BASE,
-            .param2 = binding->param2,
-        };
-        int err = behavior_keymap_binding_pressed(&output, event);
+        int err = press_forwarded(DEVICE_DT_NAME(DT_NODELABEL(out)),
+                                  binding->param1 - LRGB_OUTPUT_BASE, binding->param2, event);
         if (err < 0) {
             return err;
         }
 
         last_layer = UINT8_MAX;
         layer_rgb_schedule(K_NO_WAIT);
-#else
-        ARG_UNUSED(event);
 #endif
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
     if (binding->param1 >= LRGB_CONTROL_BASE) {
-        struct zmk_behavior_binding underglow = {
-            .behavior_dev = DEVICE_DT_NAME(DT_NODELABEL(rgb_ug)),
-            .param1 = binding->param1 - LRGB_CONTROL_BASE,
-            .param2 = binding->param2,
-        };
-        int err = behavior_keymap_binding_pressed(&underglow, event);
+        int err = press_forwarded(DEVICE_DT_NAME(DT_NODELABEL(rgb_ug)),
+                                  binding->param1 - LRGB_CONTROL_BASE, binding->param2, event);
         if (err < 0) {
             return err;
         }
@@ -566,15 +588,12 @@ static int layer_rgb_sync_pressed(struct zmk_behavior_binding *binding,
         return ZMK_BEHAVIOR_OPAQUE;
     }
 
-    ARG_UNUSED(event);
 #if !IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
     remote_layer = binding->param1;
     remote_brightness = binding->param2 & 0xff;
     remote_on = (binding->param2 & BIT(8)) != 0;
     remote_initialized = true;
     layer_rgb_schedule(K_NO_WAIT);
-#else
-    ARG_UNUSED(binding);
 #endif
     return ZMK_BEHAVIOR_OPAQUE;
 }
