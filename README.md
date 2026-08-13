@@ -1,187 +1,273 @@
 # Tomahawk 56
-Fork of [Tomahawk-Keyboards/tomahawk56-wireless-view-zmk-config](https://github.com/Tomahawk-Keyboards/tomahawk56-wireless-view-zmk-config) ([ZMK](https://zmk.dev)).
 
-## Setup
+ZMK firmware for a wireless Tomahawk56 with nice!view displays, per-key layer
+lighting, pointing controls, ZMK Studio, and local reproducible builds. This is
+a fork of
+[Tomahawk-Keyboards/tomahawk56-wireless-view-zmk-config](https://github.com/Tomahawk-Keyboards/tomahawk56-wireless-view-zmk-config).
 
-```sh
-make setup   # once: mise install, west init, git hooks
-```
+## Prerequisites and setup
 
-If this checkout was initialized before build isolation was added, migrate it
-once with `make distclean && make init`.
-
-## Build (local)
-
-```sh
-make build   # left + right + reset -> artifacts/*.uf2
-```
-Just one half: `make build-left` / `make build-right`. Details: `make help`, `scripts/build.sh`.
-
-Downloaded West projects and generated intermediates stay under `.build/`;
-only the finished firmware is copied to `artifacts/`.
-
-## Cleaning
+Install Git, [Docker Desktop](https://www.docker.com/products/docker-desktop/)
+or a compatible Docker Compose runtime, and [mise](https://mise.jdx.dev/). Start
+Docker, then bootstrap the pinned tools, isolated West workspace, and Git hooks:
 
 ```sh
-make clean      # remove intermediates, test output, and UF2s; keep dependencies
-make distclean  # also remove the West workspace; run make init afterward
+make setup
 ```
 
-## Flash
+The command is safe to rerun. If the checkout predates the `.build/`-isolated
+West workspace, migrate it once with `make distclean && make setup`.
 
-Connect both halves and keep them powered on. Enter Settings (see below) and tap
-the top-left red corner to put the left half in bootloader mode, or the top-right
-red corner for the right half, then:
+## Command reference
+
+Run `make help` for the same list at the command line.
+
+| Command | Purpose |
+| --- | --- |
+| `make setup` | Install pinned developer tools, initialize West, and install hooks |
+| `make init` | Initialize or refresh the isolated West workspace |
+| `make update` | Fetch the revisions pinned by `config/west.yml` |
+| `make build` | Build `left.uf2`, `right.uf2`, and `reset.uf2` |
+| `make build-left` | Build only the central/left firmware |
+| `make build-right` | Build only the peripheral/right firmware |
+| `make build-reset` | Build only the settings-reset image |
+| `make test` | Run all 19 native-simulator behavior tests |
+| `make lint` | Check C, Python, shell, and YAML files |
+| `make format` | Format repository-owned C, Python, and shell files |
+| `make clean` | Remove build/test output and artifacts, retaining dependencies |
+| `make distclean` | Remove the West workspace, dependencies, output, and artifacts |
+| `make flash` | Flash left and right in sequence on macOS |
+| `make flash-left` / `make flash-right` | Flash one half on macOS |
+| `make flash-reset` | Erase all persistent settings on the connected half |
+| `make live-keymap` | Compare the live Studio keymap with the compiled keymap |
+| `make clear-pinned-keymap` | Remove Studio-saved bindings without losing pairings |
+
+The individual lint and format targets are `lint-c`, `lint-python`,
+`lint-shell`, `lint-yaml`, `format-c`, `format-python`, and `format-shell`.
+
+## Local build workflow
+
+Build all firmware with:
 
 ```sh
-make flash   # left, then right
+make build
 ```
-Just one half: `make flash-left` / `make flash-right`. Details: `make help`, `scripts/flash.sh`.
 
-Flashing a newly built image drops any keymap saved from ZMK Studio, so the board
-comes up running exactly what was built. Bluetooth pairings and the rest of the
-settings partition are untouched; `make flash-reset` wipes those too.
+The Make targets run `scripts/build.sh` inside the stable
+`zmkfirmware/zmk-build-arm` image from `compose.yaml`. The local West calls
+mirror the three entries in `build.yaml`, which the GitHub Actions workflow also
+uses:
 
-## Testing
+- `tomahawk56_left nice_view_adapter nice_view`, with Studio RPC over USB UART
+- `tomahawk56_right nice_view_adapter nice_view`
+- `settings_reset`
+
+Fetched West projects live in `.build/west/`; generated firmware and simulator
+output live elsewhere under `.build/`. Finished images are copied to:
+
+```text
+artifacts/left.uf2
+artifacts/right.uf2
+artifacts/reset.uf2
+```
+
+Use `make clean` for generated output only. After `make distclean`, run
+`make init` or `make setup` before building again.
+
+## Testing, linting, and formatting
 
 ```sh
 make test
+make lint
+git diff --check
 ```
-Runs the behavior tests in `tests/` on ZMK's native simulator: timed key events
-in, emitted keycodes diffed against snapshots. Covers the home-row layer-taps,
-the Space/Cmd thumbs, and the other modifier thumbs; see the README in each
-directory.
 
-## Linting
+The 19 tests feed timed key events into ZMK's native simulator and compare
+emitted keycodes with snapshots. They cover home-row layer taps, Space/Cmd, and
+the other thumb modifiers; each directory under `tests/` documents its timing
+invariants. Golden `events.patterns` and `keycode_events.snapshot` files should
+change only when behavior intentionally changes.
+
+`make lint` uses tool versions pinned in `.mise.toml`: clang-format and Ruff for
+C and Python, ShellCheck and shfmt for shell, and yamllint for YAML. Lefthook
+runs the matching file-specific checks before commits. Use `make format` to
+apply the supported C, Python, and shell formatters.
+
+## Flashing
+
+### Automated macOS flashing
+
+Keep both halves powered on. Enter Settings by squeezing the two lower keys in
+either outer column, then press the red top outer corner on the half being
+flashed. Run:
 
 ```sh
-make lint
+make flash        # left, then right
+make flash-left   # left only
+make flash-right  # right only
 ```
-Runs via `mise` (`.mise.toml`); `lefthook` runs the same checks on `git commit` (wired up by `make setup`).
+
+`scripts/flash.sh` waits for exactly one UF2 volume under `/Volumes`, attempts
+to mount an enumerated but unmounted Mikoto bootloader, copies without macOS
+resource forks, and waits for the board to reboot. Disconnect or unmount other
+UF2 devices so the script never has to guess.
+
+### Manual UF2 copying on any platform
+
+1. Build the required image.
+2. Connect the target half by USB and keep both halves powered.
+3. Enter Settings and press that half's red top outer corner. A UF2 drive
+   appears.
+4. Copy `artifacts/left.uf2` to the left half or `artifacts/right.uf2` to the
+   right half. Copy the file onto the mounted drive; do not rename or extract it.
+5. Wait for the drive to disappear and the half to reboot before unplugging it.
+
+The left half is the split central and stores the live keymap. On its first boot
+after a normal firmware flash, it removes bindings saved by an older ZMK Studio
+image while retaining Bluetooth pairings.
+
+### Settings reset consequences
+
+`make flash-reset` flashes `reset.uf2` and erases the entire settings partition
+on that half. On the left, that includes the Studio keymap and host Bluetooth
+profiles; on either half, it includes split bonding data. Re-pair whatever the
+erased half forgot. A normal left/right flash or `make clear-pinned-keymap` is
+safer when only Studio overrides are at fault.
 
 ## Editing the keymap
 
-- **[customkeymap.com](https://customkeymap.com/) (recommended)**: web-based visualizer/editor. Point it at this repo (owner/repo or a direct `.keymap` link), click keys to change bindings/layers/behaviors/combos, and commit straight back to GitHub — or export SVG/PNG or a `.keymap` file.
-- [keymap-editor](https://nickcoutsos.github.io/keymap-editor/): web app, GitHub OAuth, commits straight to this repo.
-- [ZMK Studio](https://zmk.studio/download): live edit over USB (left half). **Saving writes to the board's settings flash, not to this repo, and those bindings then override the compiled keymap on every boot** (see Diagnostics), so anything worth keeping belongs in `config/tomahawk56.keymap`. Locked by default; unlock with the orange key on the Settings layer (`&studio_unlock`).
-- Directly: `config/tomahawk56.keymap` (ASCII layer diagrams in comments)
+The source of truth is `config/tomahawk56.keymap`; its diagrams show every
+position and layer. Editing options include:
 
-## Diagnostics
+- [customkeymap.com](https://customkeymap.com/) for a visual editor pointed at
+  this repository or the raw keymap URL
+- [keymap-editor](https://nickcoutsos.github.io/keymap-editor/) for a GitHub-backed
+  visual editor
+- [ZMK Studio](https://zmk.studio/download) for live USB editing on the left half
+- direct devicetree editing for behaviors, combos, macros, and bindings
 
-If the keyboard behaves differently from `config/tomahawk56.keymap`, it is
-probably running bindings pinned in settings flash by a ZMK Studio save made
-since the last flash. Plug the **left** half in over USB and ask it:
+ZMK Studio is locked by default. Enter Settings and press the orange outer key
+on the second row to unlock it. Saving in Studio writes bindings to the board's
+settings flash, not this repository, and those bindings override the compiled
+keymap until cleared or superseded by the first boot of a newly built image.
+Commit lasting changes to `config/tomahawk56.keymap`.
 
-```sh
-make live-keymap           # read-only; lists every position that disagrees with the build
-make clear-pinned-keymap   # drop the saved keymap, keeping Bluetooth pairings
-```
+## Runtime controls
 
-`make flash-reset` does the same but wipes the whole settings partition, so it
-forces re-pairing.
-
-The firmware also clears pinned bindings itself on the first boot after a flash
-(`CONFIG_TOMAHAWK56_STUDIO_RESET_ON_FLASH`, on by default): every build stamps a
-fresh id into the image, the board records the id it last booted, and
-`config/src/tomahawk56_studio_reset.c` drops the saved keymap when the two
-disagree. Set it to `n` in `config/tomahawk56.conf` to keep Studio saves across
-flashes instead.
-
-## Runtime key bindings
-
-Five layers, derived from the Dygma Defy "Cruiser" layout:
+The five-layer layout is derived from Dygma Defy's Cruiser layout:
 
 - Hold `F` or `J` for Symbols.
 - Hold `D` or `K` for Functional.
 - Hold `S` or `L` for Magic.
-- Chord `C+V` or `M+,` on Base for Escape with one hand.
-- On an active layer, tap either Space/Cmd thumb to lock or unlock that layer;
+- Press `C+V` or `M+,` on Base for a one-handed Escape.
+- On an active layer, tap either Space/Cmd thumb to latch or unlatch that layer;
   hold it for Cmd.
-- Squeeze either half's two lower outer keys together for Settings (below).
+- Squeeze the lower two keys of either outer column for Settings.
 
-The thumbs tap Tab, Backspace, Space, and Enter; holding them produces Ctrl,
-Shift, Cmd, and Option respectively, mirrored on both halves. They use balanced
-hold-taps: press the thumb, tap and release the chord key, then release the
-thumb. The modifier resolves as soon as the chord key comes up instead of
-waiting for the tapping term. A typing roll where the thumb comes up first
-remains a tap. To repeat Space or Backspace, tap it and re-press within the
-quick-tap window.
+The mirrored thumbs tap Tab, Backspace, Space, and Enter and hold Ctrl, Shift,
+Cmd, and Option. A deliberate chord resolves when its nested key is released;
+a typing roll where the thumb is released first remains a tap. To repeat Space
+or Backspace, tap and re-press it within its quick-tap window.
 
-## Settings
+### Settings layer
 
-Everything that configures the *keyboard* rather than the computer lives on its
-own layer, reached one-handed from either half by squeezing the lower two keys of
-that half's outer column together — left of `A` + left of `Z`, or right of `'` +
-right of `/`. Those four positions are dead on every other layer, so no typing
-roll can reach either pair.
+Settings is latched and blocks normal typing. Any thumb returns to Base, as does
+the outer-column squeeze. Most controls are on the left half; the right retains
+its bootloader corner and illuminated exit positions.
 
-Settings is latched, not held — both hands stay free, so stepping through
-profiles is just repeated taps. **Any thumb key exits**, as does the same squeeze
-again. Every position the layer does not use is `&none`, so while Settings is on
-the board types nothing. The per-key colors are the legend:
-
-| Key | Color | Does |
+| Position | Color | Action |
 | --- | --- | --- |
-| Top-left / top-right outer corner | red | `&bootloader` for **that half** — the only way in, and the first step of a flash |
-| `1`–`4` | blue | Bluetooth profiles 1-4. The selected one turns **green** when its host is connected, **white** while it is still advertising |
-| `5` | red | `&bt BT_CLR_ALL` — forget all four pairings at once. Not undoable |
-| Outer, second row | orange | `&studio_unlock` (left half is the Studio half) |
-| `Q` / `W` | teal / light blue | Send typing over USB / over Bluetooth. Whichever is selected turns **green** |
-| `S` / `D` / `F` | yellow | RGB toggle, brightness down, brightness up |
-| `B` | green | Battery readout — both halves paint a level bar, green to red |
-| All eight thumbs | white | Back to Base |
+| Left/right top outer corner | red | Enter that half's bootloader |
+| `1`–`4` | blue | Select Bluetooth profile 1–4 |
+| Selected profile | green / white | Connected / advertising |
+| `5` | red | Clear all four host pairings; irreversible |
+| Left outer key, second row | orange | Unlock ZMK Studio |
+| `Q` / `W` | teal / light blue | Prefer USB / Bluetooth output |
+| Preferred output | green | Currently selected output preference |
+| `S` / `D` / `F` | yellow | RGB toggle / brightness down / brightness up |
+| `B` | green | Show battery levels on both halves |
+| Any thumb | white | Return to Base |
 
-Settings is a **left-handed panel**: every control is on the left half, and the
-right half keeps only its own bootloader corner and the white pair that toggles
-the layer. Both entry pairs stay lit white while the layer is on, so the way out
-is always visible.
+`BT_CLR_ALL` clears host profiles but not the separate bond between keyboard
+halves. Only `reset.uf2` erases all settings.
 
-RGB appears both here and on Magic on purpose: Magic is the quick hold for a
-one-off nudge, Settings is where you sit and walk brightness up or down. There is
-no soft-reboot key — the power switch on each half already does that.
+### Layer lighting
 
-Split pairing between the halves is a separate bond from the host profiles:
-`BT_CLR_ALL` does not touch it. Wiping that (and everything else in the settings
-partition) is `make flash-reset`.
+Each half has 24 main-key LEDs followed by four thumb LEDs. ZMK underglow owns
+power and brightness; the local module supplies the per-layer frame.
 
-## Layer lighting
+- Base uses white main keys and Defy role colors on the thumbs.
+- Symbols uses orange, teal, and yellow rows.
+- Functional groups function, media, editing, navigation, and shortcut keys.
+- Magic groups RGB, macro, mouse movement, scrolling, and mouse-button keys.
+- Settings uses the control legend above and dynamically marks profiles and
+  output preference.
 
-The firmware uses the 28 addressable LEDs on each half as 24 main-key LEDs and
-four thumb LEDs. There is no separate set of underglow-only pixels on the
-Tomahawk56; ZMK's underglow controls power and dim this per-key map. RGB is
-forced on at each power-up and stays on while the keyboard is awake; the Magic
-and Settings toggles can still turn it off for the current session.
+The central synchronizes layer, brightness, and effective on/off state to the
+peripheral. Battery and connection indicators render through independent
+override channels. Frames update on events rather than polling, and static
+frames stop the vendor underglow animation timer. RGB turns on at power-up,
+dims off at idle, wakes with keyboard activity, and can be toggled off for the
+current session.
 
-- Base lights the five active main columns on each half white and leaves both
-  physical outer columns dark. The thumbs keep the Defy role colors for Ctrl,
-  Shift, Cmd, and Option, on every layer except Settings.
-- Symbols leaves the number row and outer columns dark, then lights the three
-  symbol rows orange, teal, and yellow from top to bottom.
-- Functional lights F1-F12 purple, then groups the rest by kind: media, editing,
-  arrows, document navigation, window chords, and application shortcuts.
-- Magic follows the Defy groups: RGB controls blue, macros red/orange/yellow/
-  green, mouse movement teal, scrolling magenta, and mouse buttons blue/green.
-- Settings is its own instrument panel; see the table above. Only its Bluetooth
-  and output keys are dynamic — the central redraws them on profile, connection,
-  and endpoint changes.
+## Architecture
 
-The left half syncs the active layer, brightness, and on/off state to the right
-half over ZMK's existing split behavior transport. Battery and BLE indicators
-stay on their independent RGB override channels. The map refreshes on events —
-layer changes, RGB controls, split reconnections, activity state — rather than by
-polling, and a static frame stops the underlying 20 Hz animation timer.
+- `config/tomahawk56.keymap` defines layers, bindings, combos, macros, the LED
+  chain length, and the private split behavior node.
+- `config/src/tomahawk56_layer_rgb.c` coordinates events, activity, split
+  synchronization, retries, and behavior forwarding.
+- `config/src/tomahawk56_layer_rgb_renderer.c` owns color maps, physical LED
+  mapping, dynamic Settings indicators, rendering, and clearing.
+- `config/cmake/tomahawk56_vendor_patches.cmake` applies checked patches to the
+  pinned underglow and RGB-widget forks before compilation.
+- `config/src/tomahawk56_studio_reset.c` removes an older Studio keymap when a
+  timestamped build id changes.
+- `scripts/build.sh`, `scripts/flash.sh`, and `scripts/live-keymap.py` provide
+  the build, macOS flash, and read-only live-keymap interfaces.
 
-> [!IMPORTANT]
-> Pointing support changes the HID descriptor. Delete and re-pair the keyboard
-> on Bluetooth hosts if mouse keys do not work after flashing.
+The renderer header is private to the firmware module. Firmware-facing node
+labels, compatible strings, settings keys, split payloads, and keymap bindings
+are intentionally stable.
 
-> [!CAUTION]
-> Physical power switch is located near USB-C connector. \
-> Left Half, Right Half \
-> On <- Off, On <- Off
+## Diagnostics and troubleshooting
 
-[Official ZMK Studio App](https://zmk.studio/download) \
-[Firmware](https://github.com/Tomahawk-Keyboards/tomahawk56-wireless-view-zmk-config/releases/download/v1.0/firmware.zip) \
-[FAQ](https://tomahawk-keyboards.com/pages/faq)
+If the keyboard differs from the checked-in keymap, connect the left half over
+USB and run:
 
-<img width="1020" height="750" alt="zmk" src="https://github.com/user-attachments/assets/1e681849-774a-49cf-ab46-c0e2c19e2068" />
+```sh
+make live-keymap
+```
+
+The dependency-free diagnostic reads the Studio RPC UART and compares binding
+parameters with `.build/firmware/left/zephyr/zephyr.dts`. It exits nonzero and
+lists every overridden position when saved Studio bindings differ. To remove
+only those bindings while keeping pairings:
+
+```sh
+make clear-pinned-keymap
+```
+
+Common failures:
+
+- Missing generated devicetree: run `make build-left` before the diagnostic.
+- No Studio response: use the left half, unlock Studio from Settings, and check
+  that the USB cable carries data.
+- Docker permission or connection errors: start Docker Desktop or the configured
+  Docker-compatible runtime, then rerun the Make target.
+- Missing West workspace: run `make init`.
+- UF2 drive never appears: keep both halves powered, retry Settings plus the red
+  corner, double-tap physical reset if accessible, and try another data cable.
+- macOS sees but cannot mount the UF2 disk: unplug and retry, change port/cable,
+  reboot macOS, or manually flash from Linux or Windows. Recent macOS FSKit
+  versions can reject the bootloader's virtual FAT volume.
+- Mouse keys fail over Bluetooth after flashing: delete and re-pair the keyboard;
+  pointing support changes the HID descriptor.
+- Right-side lighting does not follow the left: verify both halves are powered
+  and bonded, then power-cycle both. Use `reset.uf2` only if re-bonding is needed.
+
+The physical power switches are beside the USB-C connectors. Their marked
+direction on both halves is `On ← Off`.
+
+[ZMK documentation](https://zmk.dev/) ·
+[ZMK Studio](https://zmk.studio/download) ·
+[Tomahawk Keyboards FAQ](https://tomahawk-keyboards.com/pages/faq)

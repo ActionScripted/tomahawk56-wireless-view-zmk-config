@@ -1,5 +1,8 @@
 .DEFAULT_GOAL := help
-.PHONY: setup init update build build-left build-right build-reset test clean distclean flash flash-left flash-right flash-reset live-keymap clear-pinned-keymap lint lint-shell lint-yaml hooks help
+.PHONY: setup init update build build-left build-right build-reset test clean distclean
+.PHONY: flash flash-left flash-right flash-reset live-keymap clear-pinned-keymap
+.PHONY: lint lint-c lint-python lint-shell lint-yaml
+.PHONY: format format-c format-python format-shell hooks help
 
 help: ## Show available commands
 	@echo "Usage: make [command]"
@@ -37,13 +40,13 @@ init: ## west init + update (safe to rerun, e.g. after changing west.yml)
 build: ## Build left, right, and reset -> artifacts/*.uf2
 	@$(RUN) ./scripts/build.sh all
 
-build-left: ## Build just the left half
+build-left: ## Build the left half
 	@$(RUN) ./scripts/build.sh left
 
-build-right: ## Build just the right half
+build-right: ## Build the right half
 	@$(RUN) ./scripts/build.sh right
 
-build-reset: ## Build just the settings_reset image
+build-reset: ## Build the settings_reset image
 	@$(RUN) ./scripts/build.sh reset
 
 update: ## west update (pull latest pinned zmk/module revisions)
@@ -64,10 +67,10 @@ distclean: ## Full reset: remove dependencies and all generated output
 flash: ## Flash both halves in sequence (prompts for each)
 	@./scripts/flash.sh all
 
-flash-left: ## Flash just the left half
+flash-left: ## Flash the left half
 	@./scripts/flash.sh left
 
-flash-right: ## Flash just the right half
+flash-right: ## Flash the right half
 	@./scripts/flash.sh right
 
 flash-reset: ## Flash the settings_reset image (clears saved Studio keymap + BT pairings)
@@ -76,7 +79,7 @@ flash-reset: ## Flash the settings_reset image (clears saved Studio keymap + BT 
 # ---
 # DIAGNOSE (host, not Docker - needs the USB serial port)
 
-live-keymap: ## Show what keymap the board is REALLY running vs. the build (plug in the left half)
+live-keymap: ## Compare the left half's live keymap with the build
 	@./scripts/live-keymap.py
 
 clear-pinned-keymap: ## Delete Studio-saved bindings so the built keymap wins again (keeps BT pairings)
@@ -91,8 +94,29 @@ hooks: ## Install git hooks (included in `make setup`)
 lint: ## Run all linters
 	@mise run lint
 
+lint-c: ## clang-format check on config/src C sources and headers
+	@mise run lint-c
+
+lint-python: ## Ruff checks and formatting validation on scripts/*.py
+	@mise run lint-python
+
 lint-shell: ## shellcheck + shfmt on scripts/*.sh
 	@mise run lint-shell
 
 lint-yaml: ## yamllint on compose.yaml, build.yaml, lefthook.yml, and workflow files
 	@mise run lint-yaml
+
+# ---
+# FORMAT
+
+format: ## Format repository-owned C, Python, and shell code
+	@mise run format
+
+format-c: ## Format config/src C sources and headers
+	@mise run format-c
+
+format-python: ## Format and sort imports in scripts/*.py
+	@mise run format-python
+
+format-shell: ## Format scripts/*.sh
+	@mise run format-shell

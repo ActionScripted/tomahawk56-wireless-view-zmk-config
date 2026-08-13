@@ -1,6 +1,12 @@
 pre-commit:
   parallel: true
   commands:
+    lint-c:
+      glob: "config/src/*.{c,h}"
+      run: mise run lint-c {staged_files}
+    lint-python:
+      glob: "scripts/*.py"
+      run: mise run lint-python {staged_files}
     lint-shell:
       glob: "scripts/*.sh"
       run: mise run lint-shell {staged_files}

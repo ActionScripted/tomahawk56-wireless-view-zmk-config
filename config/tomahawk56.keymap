@@ -23,8 +23,7 @@
     time-to-max-speed-ms = <250>;
 };
 
-/* RGB and output commands route through lrgb_sync so the press itself repaints
- * the key. The param1 ranges are decoded in config/src/tomahawk56_layer_rgb.c. */
+/* Route controls through lrgb_sync so each press immediately refreshes its indicator. */
 #define LRGB(cmd) &lrgb_sync (0x100 + (cmd)) 0
 #define LOUT(cmd) &lrgb_sync (0x200 + (cmd)) 0
 
@@ -47,7 +46,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 
 / {
     behaviors {
-        /* Internal global behavior; node name must fit ZMK's 8-byte BLE field. */
+        /* The node name must fit ZMK's eight-byte split-behavior field. */
         lrgb_sync: lrgb {
             compatible = "zmk,behavior-layer-rgb-sync";
             #binding-cells = <2>;
@@ -101,7 +100,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             bindings = <&mo>, <&kp>;
         };
 
-        /* On active layers, a nested key tap resolves this thumb as Cmd. */
+        /* A nested tap resolves Cmd; an unchorded tap toggles the active layer. */
         cmd_tog: cmd_tog {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
@@ -132,8 +131,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             bindings = <&kp>, <&kp>;
         };
 
-        /* Same resolution for Space/Cmd, with a longer prior-idle guard so a
-         * Space pressed during continuous typing stays a tap. */
+        /* The longer idle guard keeps Space a tap during continuous typing. */
         safe_space_mt: safe_space_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
@@ -174,7 +172,7 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
     combos {
         compatible = "zmk,combos";
 
-        /* Mirrored Escape chords, on pairs that almost never roll in prose. */
+        /* Mirrored pairs unlikely to roll in normal prose. */
         escape_left {
             timeout-ms = <35>;
             require-prior-idle-ms = <100>;
@@ -192,10 +190,8 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         };
 
         /*
-         * Settings, one-handed from either half. Both positions are &none on
-         * every layer, so no typing roll can reach the pair - hence no
-         * prior-idle guard and a loose timeout. Listed on L_SET too so the
-         * same squeeze toggles back out.
+         * Both positions are &none on every layer, so Settings needs no
+         * prior-idle guard. Including L_SET makes the same squeeze exit.
          */
         settings_left {
             timeout-ms = <100>;
@@ -288,14 +284,11 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         };
 
         /*
-         * Latched, not held, so both hands stay free for multi-tap work like
-         * stepping through profiles. Unused positions are &none rather than
-         * &trans: while the layer is on the board types nothing. The RGB map is
-         * the legend (see the README).
+         * Settings is latched for repeated controls. Unused positions are
+         * &none so the layer cannot type accidental host input.
          *
-         * &bootloader is event-source local, so each half's own key reflashes
-         * that half. &ind_bat is global-locality and blocks on a split send -
-         * fine here, never on Base.
+         * &bootloader is event-source local, so each corner targets its half.
+         * &ind_bat may block on a global split send and therefore stays off Base.
          */
         settings_layer {
             display-name = "Settings";
@@ -308,11 +301,9 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 //
 // * CLR is &bt BT_CLR_ALL: forgets all four pairings at once, not undoable.
 //
-// The profile keys have to stay on the number row: rgbled-widget finds &bt
-// BT_SEL bindings and paints its own connect/advertise indicator on them with a
-// position-to-pixel formula that only agrees with our LED map on this row (see
-// main_pixels in config/src/tomahawk56_layer_rgb.c). RGB sits a row away so a slip
-// while walking brightness cannot switch profile and drop the connection.
+// Profile keys must remain on this row: rgbled-widget's position-to-pixel
+// formula agrees with the renderer's physical LED map only here. RGB controls
+// stay a row away to prevent a brightness slip from switching profiles.
             bindings = <
 &bootloader     &bt BT_SEL 0   &bt BT_SEL 1       &bt BT_SEL 2       &bt BT_SEL 3       &bt BT_CLR_ALL  &none  &none  &none  &none  &none  &bootloader
 &studio_unlock  LOUT(OUT_USB)  LOUT(OUT_BLE)      &none              &none              &none           &none  &none  &none  &none  &none  &none

@@ -4,7 +4,5 @@ on: [push, pull_request, workflow_dispatch]
 
 jobs:
   build:
-    # The vendor fork's branch must match the zmk revision pinned in
-    # config/west.yml. Upstream equivalent:
-    # uses: zmkfirmware/zmk/.github/workflows/build-user-config.yml@main
+    # Keep the workflow branch aligned with the ZMK revision in config/west.yml.
     uses: Tomahawk-Keyboards/zmk/.github/workflows/build-user-config.yml@modify_backlight_layer

@@ -1,6 +1,4 @@
-# Build matrix consumed by the GitHub Actions workflow
-# (.github/workflows/build.yml); scripts/build.sh builds the same
-# board/shield combinations locally.
+# CI matrix; scripts/build.sh builds the same board/shield combinations locally.
 ---
 include:
   - board: mikoto@7.3.0//zmk

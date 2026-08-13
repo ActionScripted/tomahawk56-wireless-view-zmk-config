@@ -1,8 +1,39 @@
 [tools]
-lefthook = "latest"
-shellcheck = "latest"
-shfmt = "latest"
-yamllint = "latest"
+clang-format = "22.1.8"
+lefthook = "2.1.10"
+ruff = "0.16.2"
+shellcheck = "0.11.0"
+shfmt = "3.13.1"
+yamllint = "1.38.0"
+
+[tasks.lint-c]
+description = "Check repository-owned C formatting"
+usage = 'arg "[files]" var=#true help="files to lint (default: config/src C sources and headers)"'
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+if [ -n "${usage_files:-}" ]; then
+  read -r -a files <<<"$usage_files"
+else
+  files=(config/src/*.c config/src/*.h)
+fi
+clang-format --dry-run --Werror "${files[@]}"
+'''
+
+[tasks.lint-python]
+description = "Run Ruff checks on Python tools"
+usage = 'arg "[files]" var=#true help="files to lint (default: scripts/*.py)"'
+run = '''
+#!/usr/bin/env bash
+set -euo pipefail
+if [ -n "${usage_files:-}" ]; then
+  read -r -a files <<<"$usage_files"
+else
+  files=(scripts/*.py)
+fi
+ruff check "${files[@]}"
+ruff format --check "${files[@]}"
+'''
 
 [tasks.lint-shell]
 description = "shellcheck + shfmt (2-space indent, indented case arms) on shell scripts"
@@ -11,7 +42,7 @@ run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 if [ -n "${usage_files:-}" ]; then
-  eval "files=($usage_files)"
+  read -r -a files <<<"$usage_files"
 else
   files=(scripts/*.sh)
 fi
@@ -26,13 +57,29 @@ run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 if [ -n "${usage_files:-}" ]; then
-  eval "files=($usage_files)"
+  read -r -a files <<<"$usage_files"
 else
   files=(compose.yaml build.yaml lefthook.yml .github/workflows/*.yml)
 fi
 yamllint "${files[@]}"
 '''
 
+[tasks.format-c]
+description = "Format repository-owned C sources and headers"
+run = "clang-format -i config/src/*.c config/src/*.h"
+
+[tasks.format-python]
+description = "Format and sort imports in Python tools"
+run = "ruff check --fix scripts/*.py && ruff format scripts/*.py"
+
+[tasks.format-shell]
+description = "Format shell tools"
+run = "shfmt -i 2 -ci -w scripts/*.sh"
+
+[tasks.format]
+description = "Format C, Python, and shell code"
+depends = ["format-c", "format-python", "format-shell"]
+
 [tasks.lint]
 description = "Run all linters"
-depends = ["lint-shell", "lint-yaml"]
+depends = ["lint-c", "lint-python", "lint-shell", "lint-yaml"]

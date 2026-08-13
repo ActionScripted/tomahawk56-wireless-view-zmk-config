@@ -1,15 +1,12 @@
 #!/usr/bin/env bash
-# Copies a built .uf2 onto a connected UF2 bootloader drive the way `west flash`
-# does: find a FAT volume with INFO_UF2.TXT at its root, refuse to guess if more
-# than one matches, copy it over. Runs on the host - Docker on macOS cannot see
-# the USB volume.
+# Copy a built UF2 to exactly one connected bootloader volume. This runs on the
+# host because Docker Desktop cannot access macOS USB volumes.
 #
 # Bootloader mode comes from the keymap, not a button: squeeze either half's two
 # lower outer keys for Settings, then tap that half's top outer corner. Layers
 # resolve on the left/central half, so both halves must be on.
 #
-# No bash arrays on purpose: macOS ships bash 3.2, which mishandles
-# "${arr[@]}" on an empty array under `set -u`.
+# Avoid arrays for compatibility with macOS Bash 3.2 and set -u.
 set -euo pipefail
 cd "$(dirname "$0")/.."
 
@@ -18,18 +15,17 @@ cd "$(dirname "$0")/.."
 BOOTLOADER_VOLUME_PREFIX="MIKOTO-BOOT"
 
 is_mountpoint() {
-  local dir="${1%/}"
-  mount | grep -qF " on $dir ("
+  local directory="${1%/}"
+  mount | grep -qF " on $directory ("
 }
 
 looks_like_uf2_volume() {
-  local vol="$1"
-  [ -f "${vol}INFO_UF2.TXT" ] && return 0
-  case "$(basename "$vol")" in
+  local volume="$1"
+  [ -f "${volume}INFO_UF2.TXT" ] && return 0
+  case "$(basename "$volume")" in
     "$BOOTLOADER_VOLUME_PREFIX"*)
-      # Name alone isn't proof: a stale dir can linger under /Volumes after an
-      # unclean unmount. Only trust it if something is actually mounted there.
-      is_mountpoint "$vol"
+      # Reject stale directories left by an unclean unmount.
+      is_mountpoint "$volume"
       ;;
     *) return 1 ;;
   esac
@@ -47,25 +43,25 @@ RESCUE_TRIES=0
 RESCUE_MAX_TRIES=3
 
 rescue_mount() {
-  local id
+  local disk_id
   [ "$RESCUE_TRIES" -lt "$RESCUE_MAX_TRIES" ] || return 1
-  id="$(find_unmounted_uf2_disk)"
-  [ -n "$id" ] || return 1
+  disk_id="$(find_unmounted_uf2_disk)"
+  [ -n "$disk_id" ] || return 1
   RESCUE_TRIES=$((RESCUE_TRIES + 1))
 
-  diskutil mount "$id" >/dev/null 2>&1 || true
+  diskutil mount "$disk_id" >/dev/null 2>&1 || true
   sleep 1
-  # diskutil exits 0 even when nothing mounted, so only trust the mount table.
-  mount | grep -q "^/dev/${id}[s ]"
+  # diskutil can succeed without mounting; the mount table is authoritative.
+  mount | grep -q "^/dev/${disk_id}[s ]"
 }
 
 find_single_uf2_mount() {
-  local mount="" match_count=0 vol
+  local matched_mount="" match_count=0 volume
 
-  for vol in /Volumes/*/; do
-    if looks_like_uf2_volume "$vol"; then
+  for volume in /Volumes/*/; do
+    if looks_like_uf2_volume "$volume"; then
       match_count=$((match_count + 1))
-      mount="$vol"
+      matched_mount="$volume"
     fi
   done
 
@@ -74,7 +70,7 @@ find_single_uf2_mount() {
       return 1
       ;;
     1)
-      FOUND_UF2_MOUNT="$mount"
+      FOUND_UF2_MOUNT="$matched_mount"
       return 0
       ;;
     *)
@@ -125,32 +121,32 @@ wait_for_uf2_mount() {
 }
 
 copy_uf2_with_retries() {
-  local uf2="$1" retries="$2" mount="" dest="" cp_err=""
+  local uf2_path="$1" retries="$2" mount_path="" destination="" copy_error=""
 
   for _ in $(seq 1 "$retries"); do
     if ! wait_for_uf2_mount 1; then
       continue
     fi
-    mount="$FOUND_UF2_MOUNT"
+    mount_path="$FOUND_UF2_MOUNT"
 
-    dest="${mount}$(basename "$uf2")"
-    echo "==> Found $mount - copying $uf2"
+    destination="${mount_path}$(basename "$uf2_path")"
+    echo "==> Found $mount_path - copying $uf2_path"
     # -X skips xattrs/resource forks, which the FAT bootloader drive rejects.
-    if cp_err="$(cp -X "$uf2" "$mount" 2>&1)"; then
-      COPIED_UF2_MOUNT="$mount"
+    if copy_error="$(cp -X "$uf2_path" "$mount_path" 2>&1)"; then
+      COPIED_UF2_MOUNT="$mount_path"
       return 0
     fi
 
     # The bootloader reboots the instant the final UF2 block lands, yanking the
     # drive out from under cp. If the mount is gone, the board took the image.
     sleep 2
-    if [ ! -d "$mount" ]; then
-      echo "==> $mount vanished mid-copy - board rebooted with the new image."
-      COPIED_UF2_MOUNT="$mount"
+    if [ ! -d "$mount_path" ]; then
+      echo "==> $mount_path vanished mid-copy - board rebooted with the new image."
+      COPIED_UF2_MOUNT="$mount_path"
       return 0
     fi
 
-    echo "==> Copy failed for $dest (${cp_err:-unknown error}); waiting for the UF2 drive to settle..."
+    echo "==> Copy failed for $destination (${copy_error:-unknown error}); waiting for the UF2 drive to settle..."
     sleep 1
   done
 
@@ -162,9 +158,9 @@ copy_uf2_with_retries() {
 # 0-byte volume, and mounting fails. Only a mount daemon restart fixes it,
 # which in practice means a reboot.
 report_unmountable_disk() {
-  local id="$1"
+  local disk_id="$1"
   cat >&2 <<EOF
-macOS sees the bootloader disk (/dev/$id) but refuses to mount its filesystem.
+macOS sees the bootloader disk (/dev/$disk_id) but refuses to mount its filesystem.
 
 This is a known macOS bug (FSKit's msdos module vs. the UF2 bootloader's
 virtual FAT volume), not a problem with the board. Things to try, in order:
@@ -179,9 +175,9 @@ EOF
 
 flash_one() {
   local target="$1"
-  local uf2="artifacts/$target.uf2"
-  [ -f "$uf2" ] || {
-    echo "Missing $uf2 - run 'make $target' first." >&2
+  local uf2_path="artifacts/$target.uf2"
+  [ -f "$uf2_path" ] || {
+    echo "Missing $uf2_path - run 'make $target' first." >&2
     exit 1
   }
 
@@ -192,28 +188,28 @@ flash_one() {
   esac
   echo "Waiting up to 60s for it to mount as a UF2 bootloader drive under /Volumes ..."
 
-  local mount="" stuck_disk=""
+  local mount_path="" unmounted_disk=""
   RESCUE_TRIES=0
 
   if ! wait_for_uf2_mount 60; then
-    stuck_disk="$(find_unmounted_uf2_disk)"
-    if [ -n "$stuck_disk" ]; then
-      report_unmountable_disk "$stuck_disk"
+    unmounted_disk="$(find_unmounted_uf2_disk)"
+    if [ -n "$unmounted_disk" ]; then
+      report_unmountable_disk "$unmounted_disk"
     else
       echo "Timed out - no UF2 drive showed up. Is the board in bootloader mode?" >&2
     fi
     exit 1
   fi
 
-  if ! copy_uf2_with_retries "$uf2" 10; then
-    echo "Failed to copy $uf2 to the UF2 drive after multiple attempts. Re-enter bootloader mode and retry." >&2
+  if ! copy_uf2_with_retries "$uf2_path" 10; then
+    echo "Failed to copy $uf2_path to the UF2 drive after multiple attempts. Re-enter bootloader mode and retry." >&2
     exit 1
   fi
-  mount="$COPIED_UF2_MOUNT"
+  mount_path="$COPIED_UF2_MOUNT"
 
   echo "==> Waiting for it to unmount and reboot..."
   for _ in $(seq 1 10); do
-    [ -d "$mount" ] || break
+    [ -d "$mount_path" ] || break
     sleep 1
   done
 

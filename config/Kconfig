@@ -11,9 +11,6 @@ config TOMAHAWK56_STUDIO_RESET_ON_FLASH
     default y
     depends on ZMK_KEYMAP_SETTINGS_STORAGE
     help
-      Bindings saved from ZMK Studio live in the settings partition and
-      override the compiled keymap on every boot, which a reflash cannot
-      undo. With this enabled the board notices the first boot of a
-      newly built image and drops those saved bindings, so a flash always
-      leaves it running exactly what was built. Bluetooth pairings and
-      every other setting are left alone.
+      Drop ZMK Studio bindings on the first boot of each newly built image.
+      Studio stores bindings outside the firmware image and reapplies them
+      over the compiled keymap. Bluetooth pairings and other settings remain.
