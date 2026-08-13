@@ -12,8 +12,10 @@
 
 #include <drivers/behavior.h>
 #include <dt-bindings/zmk/rgb.h>
+#include <zmk/activity.h>
 #include <zmk/behavior.h>
 #include <zmk/event_manager.h>
+#include <zmk/events/activity_state_changed.h>
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 #include <zephyr/bluetooth/conn.h>
 #include <zmk/ble.h>
@@ -23,6 +25,9 @@
 #include <zmk/events/layer_state_changed.h>
 #include <zmk/keymap.h>
 #include <zmk/split/central.h>
+#else
+#include <zmk/events/split_peripheral_status_changed.h>
+#include <zmk/split/bluetooth/peripheral.h>
 #endif
 #include <zmk/rgb_underglow.h>
 #include <zmk/workqueue.h>
@@ -35,6 +40,7 @@
 #define LRGB_RETRY_MS 50
 #define LRGB_CONNECT_RETRY_MS 500
 #define LRGB_CONNECT_ATTEMPTS 8
+#define LRGB_ACTIVITY_SETTLE_MS 10
 
 /*
  * The behavior is global, so one binding carries three kinds of param1:
@@ -331,6 +337,18 @@ static void layer_rgb_schedule(k_timeout_t delay) {
     k_work_reschedule_for_queue(zmk_workqueue_lowprio_work_q(), &layer_rgb_work, delay);
 }
 
+/* The central's activity represents the entire keyboard. The peripheral uses
+ * its local activity only while disconnected; while connected, the central's
+ * synced state must win so left-hand-only typing does not darken the right. */
+static bool activity_requires_darkness(void) {
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    return zmk_activity_get_state() != ZMK_ACTIVITY_ACTIVE;
+#else
+    return !zmk_split_bt_peripheral_is_connected() &&
+           zmk_activity_get_state() != ZMK_ACTIVITY_ACTIVE;
+#endif
+}
+
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
 static void layer_rgb_connected(struct bt_conn *conn, uint8_t err) {
     if (err != 0) {
@@ -446,15 +464,31 @@ static void layer_rgb_work_handler(struct k_work *work) {
         return;
     }
 
+    bool effective_on = underglow_on && !activity_requires_darkness();
+
 #if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
-    uint32_t sync_retry_ms = sync_state_to_peripheral(layer, brightness, underglow_on);
+    uint32_t sync_retry_ms = sync_state_to_peripheral(layer, brightness, effective_on);
     if (sync_retry_ms != 0) {
         retry = true;
         retry_delay_ms = sync_retry_ms;
     }
+#else
+    /* The peripheral does not run ZMK's independent idle auto-off: while the
+     * link is up it follows the central, and while disconnected the activity
+     * rule above supplies the fallback. Keep the real underglow state aligned
+     * so the renderer's ordinary off state blanks every status channel too. */
+    bool local_on;
+    int align_err = zmk_rgb_underglow_get_state(&local_on);
+    if (align_err == 0 && local_on != effective_on) {
+        align_err = effective_on ? zmk_rgb_underglow_on() : zmk_rgb_underglow_off();
+    }
+    if (align_err < 0) {
+        layer_rgb_schedule(K_MSEC(LRGB_RETRY_MS));
+        return;
+    }
 #endif
 
-    if (!underglow_on || brightness == 0) {
+    if (!effective_on || brightness == 0) {
         if (layer_channel_active) {
             if (zmk_rgb_underglow_clear_status_channel(
                     ZMK_RGB_UNDERGLOW_STATUS_CHANNEL_LAYER) == 0) {
@@ -518,6 +552,63 @@ ZMK_SUBSCRIPTION(tomahawk56_layer_rgb_ble, zmk_ble_active_profile_changed);
 /* Catches the output moving on its own - USB unplugged, a fallback - rather
  * than by a key press, which repaints itself in layer_rgb_sync_pressed(). */
 ZMK_SUBSCRIPTION(tomahawk56_layer_rgb_ble, zmk_endpoint_changed);
+#endif
+
+/* The central's activity covers both halves and its sync normally carries the
+ * effective on/off state to the peripheral. A disconnected peripheral falls
+ * back to its own activity so it cannot remain lit forever, especially on USB
+ * where ZMK does not enter deep sleep.
+ *
+ * The delay is the point. ZMK's own AUTO_OFF_IDLE listener flips the underglow
+ * on this same event and ZMK_LISTENER order is link order, so running promptly
+ * risks reading the state from before the flip - and on wake that reads as off,
+ * clearing the channel with no further event to repaint it.
+ */
+static int layer_rgb_activity_listener(const zmk_event_t *event) {
+    const struct zmk_activity_state_changed *ev = as_zmk_activity_state_changed(event);
+    if (ev == NULL) {
+        return -ENOTSUP;
+    }
+
+#if IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+    last_synced_layer = UINT8_MAX;
+#else
+    /* Ignore the peripheral's independent idle transition while connected:
+     * the central's synced state governs a connected half. Its ACTIVE
+     * transition and all disconnected transitions still repaint or clear. */
+    if (ev->state != ZMK_ACTIVITY_ACTIVE && zmk_split_bt_peripheral_is_connected()) {
+        return 0;
+    }
+#endif
+    last_layer = UINT8_MAX;
+    layer_rgb_schedule(K_MSEC(LRGB_ACTIVITY_SETTLE_MS));
+    return 0;
+}
+
+ZMK_LISTENER(tomahawk56_layer_rgb_activity, layer_rgb_activity_listener);
+ZMK_SUBSCRIPTION(tomahawk56_layer_rgb_activity, zmk_activity_state_changed);
+
+#if !IS_ENABLED(CONFIG_ZMK_SPLIT_ROLE_CENTRAL)
+/* If the link drops after this half is already idle, no new activity event will
+ * arrive to clear it. React to that edge directly; reconnect waits for the
+ * central's authoritative sync before repainting. */
+static int layer_rgb_peripheral_status_listener(const zmk_event_t *event) {
+    const struct zmk_split_peripheral_status_changed *ev =
+        as_zmk_split_peripheral_status_changed(event);
+    if (ev == NULL) {
+        return -ENOTSUP;
+    }
+
+    if (!ev->connected && zmk_activity_get_state() != ZMK_ACTIVITY_ACTIVE) {
+        last_layer = UINT8_MAX;
+        layer_rgb_schedule(K_MSEC(LRGB_ACTIVITY_SETTLE_MS));
+    }
+    return 0;
+}
+
+ZMK_LISTENER(tomahawk56_layer_rgb_peripheral_status, layer_rgb_peripheral_status_listener);
+ZMK_SUBSCRIPTION(tomahawk56_layer_rgb_peripheral_status,
+                 zmk_split_peripheral_status_changed);
 #endif
 
 static int layer_rgb_control_convert(struct zmk_behavior_binding *binding,
