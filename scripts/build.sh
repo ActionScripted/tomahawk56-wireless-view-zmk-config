@@ -1,20 +1,29 @@
 #!/usr/bin/env bash
 # Local ZMK build, mirroring the west calls that build-user-config.yml makes in
 # CI. Run via `make` inside the zmk-build-arm container (see compose.yaml); it
-# expects `west` and the Zephyr toolchain already on PATH.
+# expects `west` and the Zephyr toolchain already on PATH. All West projects
+# and generated build/test output live under .build/ so the repository root
+# stays limited to source files and finished artifacts.
 set -euo pipefail
-cd "$(dirname "$0")/.."
+
+ROOT_DIR="$(cd "$(dirname "$0")/.." && pwd)"
+GENERATED_DIR="$ROOT_DIR/.build"
+WEST_WORKSPACE="$GENERATED_DIR/west"
+FIRMWARE_BUILD_DIR="$GENERATED_DIR/firmware"
+ARTIFACT_DIR="$ROOT_DIR/artifacts"
+CONFIG_DIR="$ROOT_DIR/config"
 
 usage() {
-  echo "Usage: $0 {init|update|left|right|reset|all}" >&2
+  echo "Usage: $0 {init|update|left|right|reset|all|test}" >&2
   exit 1
 }
 
 require_init() {
-  [ -d .west ] || {
-    echo "No .west workspace - run 'make init' first." >&2
+  [ -f "$WEST_WORKSPACE/.west/config" ] && [ -d "$WEST_WORKSPACE/zmk/app" ] || {
+    echo "No West workspace under .build - run 'make init' first." >&2
     exit 1
   }
+  cd "$WEST_WORKSPACE"
   # Each `make` target gets a throwaway container, and zephyr-export writes its
   # CMake package registration outside /workspace. Cheap, so just redo it.
   west zephyr-export
@@ -25,24 +34,32 @@ BOARD="mikoto@7.3.0//zmk"
 
 build() {
   local name="$1" shield="$2" snippet="$3"
+  local build_dir="$FIRMWARE_BUILD_DIR/$name"
   shift 3
   echo "==> Building $name"
   if [ -n "$snippet" ]; then
-    west build -s zmk/app -d "build/$name" -b "$BOARD" -S "$snippet" -- \
-      -DZMK_CONFIG="$(pwd)/config" -DSHIELD="$shield" "$@"
+    west build -s zmk/app -d "$build_dir" -b "$BOARD" -S "$snippet" -- \
+      -DZMK_CONFIG="$CONFIG_DIR" -DSHIELD="$shield" "$@"
   else
-    west build -s zmk/app -d "build/$name" -b "$BOARD" -- \
-      -DZMK_CONFIG="$(pwd)/config" -DSHIELD="$shield" "$@"
+    west build -s zmk/app -d "$build_dir" -b "$BOARD" -- \
+      -DZMK_CONFIG="$CONFIG_DIR" -DSHIELD="$shield" "$@"
   fi
-  mkdir -p artifacts
-  cp "build/$name/zephyr/zmk.uf2" "artifacts/$name.uf2"
+  mkdir -p "$ARTIFACT_DIR"
+  cp "$build_dir/zephyr/zmk.uf2" "$ARTIFACT_DIR/$name.uf2"
   echo "==> artifacts/$name.uf2"
 }
 
 cmd="${1:-all}"
 case "$cmd" in
   init)
-    [ -d .west ] || west init -l config
+    mkdir -p "$WEST_WORKSPACE/.west"
+    cd "$WEST_WORKSPACE"
+    # `west init -l` always puts .west next to the local manifest repository.
+    # Configure this isolated workspace directly so the tracked config/ can
+    # remain at the repository root while every fetched project lives here.
+    west config --local manifest.path ../../config
+    west config --local manifest.file west.yml
+    west config --local zephyr.base zephyr
     west update --fetch-opt=--filter=tree:0
     west zephyr-export
     ;;
@@ -66,6 +83,11 @@ case "$cmd" in
     "$0" left
     "$0" right
     "$0" reset
+    ;;
+  test)
+    require_init
+    ZMK_SRC_DIR=zmk/app ZMK_BUILD_DIR="$GENERATED_DIR" \
+      zmk/app/run-test.sh "$ROOT_DIR/tests"
     ;;
   *) usage ;;
 esac

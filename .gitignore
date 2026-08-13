@@ -1,13 +1,8 @@
 .DS_Store
 __pycache__
 
-# west workspace (created by `make init`) - top-level dirs from `west list -f {path}`
-/.west/
-/zmk/
-/zmk-rgbled-widget/
-/modules/
-/optional/
-/zephyr/
-/build/
-/artifacts/
+# West workspace, downloaded projects, and build/test output
+/.build/
 
+# Finished firmware copied out of the build tree
+/artifacts/

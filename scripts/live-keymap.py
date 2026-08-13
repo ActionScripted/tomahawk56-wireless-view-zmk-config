@@ -23,7 +23,7 @@ import sys
 import time
 
 SOF, ESC, EOF = 0xAB, 0xAC, 0xAD
-DTS = "build/left/zephyr/zephyr.dts"
+DTS = ".build/firmware/left/zephyr/zephyr.dts"
 LAYER_NODES = ("base_layer", "symbols_layer", "functional_layer", "magic_layer",
                "settings_layer")
 

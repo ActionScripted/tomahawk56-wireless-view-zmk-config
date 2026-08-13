@@ -1,5 +1,5 @@
 .DEFAULT_GOAL := help
-.PHONY: setup init update build build-left build-right build-reset test clean flash flash-left flash-right flash-reset live-keymap clear-pinned-keymap lint lint-shell lint-yaml hooks help
+.PHONY: setup init update build build-left build-right build-reset test clean distclean flash flash-left flash-right flash-reset live-keymap clear-pinned-keymap lint lint-shell lint-yaml hooks help
 
 help: ## Show available commands
 	@echo "Usage: make [command]"
@@ -50,11 +50,13 @@ update: ## west update (pull latest pinned zmk/module revisions)
 	@$(RUN) ./scripts/build.sh update
 
 test: ## Run behavior tests (tests/) on ZMK's native simulator
-	@$(RUN) sh -c "west zephyr-export >/dev/null && \
-		ZMK_SRC_DIR=zmk/app ZMK_BUILD_DIR=/workspace/build zmk/app/run-test.sh /workspace/tests"
+	@$(RUN) ./scripts/build.sh test
 
-clean: ## Full reset: remove the west workspace + build output (re-run `make init` after)
-	@rm -rf build artifacts .west zmk zmk-rgbled-widget modules optional zephyr
+clean: ## Remove build/test output and UF2s (keep downloaded dependencies)
+	@rm -rf .build/firmware .build/tests .build/tmp artifacts
+
+distclean: ## Full reset: remove dependencies and all generated output
+	@rm -rf .build artifacts .west zmk zmk-rgbled-widget modules optional zephyr build
 
 # ---
 # FLASH (host, not Docker - needs to see the USB drive)

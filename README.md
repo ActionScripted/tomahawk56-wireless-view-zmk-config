@@ -7,12 +7,25 @@ Fork of [Tomahawk-Keyboards/tomahawk56-wireless-view-zmk-config](https://github.
 make setup   # once: mise install, west init, git hooks
 ```
 
+If this checkout was initialized before build isolation was added, migrate it
+once with `make distclean && make init`.
+
 ## Build (local)
 
 ```sh
 make build   # left + right + reset -> artifacts/*.uf2
 ```
 Just one half: `make build-left` / `make build-right`. Details: `make help`, `scripts/build.sh`.
+
+Downloaded West projects and generated intermediates stay under `.build/`;
+only the finished firmware is copied to `artifacts/`.
+
+## Cleaning
+
+```sh
+make clean      # remove intermediates, test output, and UF2s; keep dependencies
+make distclean  # also remove the West workspace; run make init afterward
+```
 
 ## Flash
 

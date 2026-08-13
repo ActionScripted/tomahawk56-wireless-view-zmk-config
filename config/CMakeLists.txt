@@ -33,7 +33,7 @@ endfunction()
 # All the underglow patches below edit the same file; keep their call sites terse.
 function(patch_underglow what from to)
   patch_vendor(ZMK_RGB_UNDERGLOW_CONTENTS
-    "git -C zmk checkout app/src/rgb_underglow.c" "RGB ${what}"
+    "git -C .build/west/zmk checkout app/src/rgb_underglow.c" "RGB ${what}"
     "${from}" "${to}")
   set(ZMK_RGB_UNDERGLOW_CONTENTS "${ZMK_RGB_UNDERGLOW_CONTENTS}" PARENT_SCOPE)
 endfunction()
@@ -101,7 +101,7 @@ if(CONFIG_TOMAHAWK56_LAYER_RGB AND CONFIG_RGBLED_WIDGET_PAIRING_LED AND
   set(ZMK_RGBLED_WIDGET_ORIGINAL "${ZMK_RGBLED_WIDGET_CONTENTS}")
 
   patch_vendor(ZMK_RGBLED_WIDGET_CONTENTS
-    "git -C zmk-rgbled-widget checkout src/widget.c" "RGB widget idle handler"
+    "git -C .build/west/zmk-rgbled-widget checkout src/widget.c" "RGB widget idle handler"
     "    case ZMK_ACTIVITY_IDLE:\n        // ZMK does not enter sleep while USB power is present. Start a timer for the portion of\n        // the sleep timeout that remains after the idle transition so pairing indication still\n        // stops at CONFIG_ZMK_IDLE_SLEEP_TIMEOUT while the keyboard is charging.\n        k_work_reschedule(&connectivity_inactivity_work,\n                          K_MSEC(MAX(0, CONFIG_ZMK_IDLE_SLEEP_TIMEOUT - CONFIG_ZMK_IDLE_TIMEOUT)));\n        break;\n    case ZMK_ACTIVITY_SLEEP:"
     "    case ZMK_ACTIVITY_IDLE:\n    case ZMK_ACTIVITY_SLEEP:")
 
