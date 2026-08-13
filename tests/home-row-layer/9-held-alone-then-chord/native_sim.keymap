@@ -1,15 +1,17 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * The timer path, and the upper bracket on the tapping term: held alone past
- * 200 ms, S is a layer, and a key pressed afterwards is a symbol. Case 8 pins
- * the other side - a 150 ms dwell is still a letter.
+ * The timer path, and the upper bracket on the tapping term: held alone for
+ * 180 ms, S is a layer, and a same-hand key pressed afterwards uses that layer.
+ * This specifically proves the shorter 175 ms term; at the old 200 ms term,
+ * the same-hand key would instead force S to tap. Case 8 pins the other side -
+ * a 150 ms dwell is still a letter.
  */
 &kscan {
     events = <
-        ZMK_MOCK_PRESS(0,0,300)
-        ZMK_MOCK_PRESS(0,1,30)
-        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_PRESS(0,0,180)
+        ZMK_MOCK_PRESS(1,0,30)
+        ZMK_MOCK_RELEASE(1,0,30)
         ZMK_MOCK_RELEASE(0,0,10)
     >;
 };
