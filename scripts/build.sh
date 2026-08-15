@@ -9,12 +9,17 @@ WEST_WORKSPACE="$GENERATED_ROOT/west"
 FIRMWARE_BUILD_ROOT="$GENERATED_ROOT/firmware"
 ARTIFACT_ROOT="$REPOSITORY_ROOT/artifacts"
 ZMK_CONFIG_DIR="$REPOSITORY_ROOT/config"
+CACHE_ROOT="$GENERATED_ROOT/cache"
+
+# Containers are disposable, so keep compiler and Zephyr caches in .build.
+export CCACHE_DIR="$CACHE_ROOT/ccache"
+export XDG_CACHE_HOME="$CACHE_ROOT"
 
 # Board and shields must remain aligned with build.yaml.
 BOARD="mikoto@7.3.0//zmk"
 
 usage() {
-  echo "Usage: $0 {init|update|left|right|reset|all|test}" >&2
+  echo "Usage: $0 {init|update|left|right|reset|all|test [suite[/case]]}" >&2
   exit 1
 }
 
@@ -81,8 +86,13 @@ case "$command" in
     ;;
   test)
     require_init
+    test_path="$REPOSITORY_ROOT/tests${2:+/$2}"
+    if [ ! -d "$test_path" ]; then
+      echo "No test suite or case at tests${2:+/$2}." >&2
+      exit 1
+    fi
     ZMK_SRC_DIR=zmk/app ZMK_BUILD_DIR="$GENERATED_ROOT" \
-      zmk/app/run-test.sh "$REPOSITORY_ROOT/tests"
+      "$REPOSITORY_ROOT/scripts/run-tests.sh" "$test_path"
     ;;
   *) usage ;;
 esac

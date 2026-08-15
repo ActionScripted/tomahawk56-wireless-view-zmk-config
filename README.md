@@ -33,6 +33,7 @@ Run `make help` for the same list at the command line.
 | `make build-reset`                     | Build only the settings-reset image                                |
 | `make keymap`                          | Generate `docs/keymap.svg` locally from the ZMK keymap             |
 | `make test`                            | Run all 19 native-simulator behavior tests                         |
+| `make test TEST=thumb-mod`             | Run one test suite (or provide a suite/case path)                  |
 | `make lint`                            | Check C, Python, shell, and YAML files                             |
 | `make format`                          | Format repository-owned C, Python, and shell files                 |
 | `make clean`                           | Remove build/test output and artifacts, retaining dependencies     |
@@ -88,6 +89,12 @@ emitted keycodes with snapshots. They cover home-row layer taps, Space/Cmd, and
 the other thumb modifiers; each directory under `tests/` documents its timing
 invariants. Golden `events.patterns` and `keycode_events.snapshot` files should
 change only when behavior intentionally changes.
+
+Test build directories and compiler caches are retained under `.build`, so
+unchanged reruns avoid pristine firmware rebuilds. During development, run a
+single suite or case with `make test TEST=thumb-mod` or
+`make test TEST=thumb-mod/1-fast-roll-through`. `make clean` forces the next
+test run to rebuild while retaining the compiler cache.
 
 `make lint` uses tool versions pinned in `.mise.toml`: clang-format and Ruff for
 C and Python, ShellCheck and shfmt for shell, and yamllint for YAML. Lefthook

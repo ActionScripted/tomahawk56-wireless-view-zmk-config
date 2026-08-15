@@ -56,7 +56,7 @@ update: ## west update (pull latest pinned zmk/module revisions)
 	@$(RUN) ./scripts/build.sh update
 
 test: ## Run behavior tests (tests/) on ZMK's native simulator
-	@$(RUN) ./scripts/build.sh test
+	@$(RUN) ./scripts/build.sh test "$(TEST)"
 
 clean: ## Remove build/test output and UF2s (keep downloaded dependencies)
 	@rm -rf .build/firmware .build/keymap .build/tests .build/tmp artifacts
