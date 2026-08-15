@@ -22,26 +22,26 @@ West workspace, migrate it once with `make distclean && make setup`.
 
 Run `make help` for the same list at the command line.
 
-| Command | Purpose |
-| --- | --- |
-| `make setup` | Install pinned developer tools, initialize West, and install hooks |
-| `make init` | Initialize or refresh the isolated West workspace |
-| `make update` | Fetch the revisions pinned by `config/west.yml` |
-| `make build` | Build `left.uf2`, `right.uf2`, and `reset.uf2` |
-| `make build-left` | Build only the central/left firmware |
-| `make build-right` | Build only the peripheral/right firmware |
-| `make build-reset` | Build only the settings-reset image |
-| `make keymap` | Generate `docs/keymap.svg` locally from the ZMK keymap |
-| `make test` | Run all 19 native-simulator behavior tests |
-| `make lint` | Check C, Python, shell, and YAML files |
-| `make format` | Format repository-owned C, Python, and shell files |
-| `make clean` | Remove build/test output and artifacts, retaining dependencies |
-| `make distclean` | Remove the West workspace, dependencies, output, and artifacts |
-| `make flash` | Flash left and right in sequence on macOS |
-| `make flash-left` / `make flash-right` | Flash one half on macOS |
-| `make flash-reset` | Erase all persistent settings on the connected half |
-| `make live-keymap` | Compare the live Studio keymap with the compiled keymap |
-| `make clear-pinned-keymap` | Remove Studio-saved bindings without losing pairings |
+| Command                                | Purpose                                                            |
+| -------------------------------------- | ------------------------------------------------------------------ |
+| `make setup`                           | Install pinned developer tools, initialize West, and install hooks |
+| `make init`                            | Initialize or refresh the isolated West workspace                  |
+| `make update`                          | Fetch the revisions pinned by `config/west.yml`                    |
+| `make build`                           | Build `left.uf2`, `right.uf2`, and `reset.uf2`                     |
+| `make build-left`                      | Build only the central/left firmware                               |
+| `make build-right`                     | Build only the peripheral/right firmware                           |
+| `make build-reset`                     | Build only the settings-reset image                                |
+| `make keymap`                          | Generate `docs/keymap.svg` locally from the ZMK keymap             |
+| `make test`                            | Run all 19 native-simulator behavior tests                         |
+| `make lint`                            | Check C, Python, shell, and YAML files                             |
+| `make format`                          | Format repository-owned C, Python, and shell files                 |
+| `make clean`                           | Remove build/test output and artifacts, retaining dependencies     |
+| `make distclean`                       | Remove the West workspace, dependencies, output, and artifacts     |
+| `make flash`                           | Flash left and right in sequence on macOS                          |
+| `make flash-left` / `make flash-right` | Flash one half on macOS                                            |
+| `make flash-reset`                     | Erase all persistent settings on the connected half                |
+| `make live-keymap`                     | Compare the live Studio keymap with the compiled keymap            |
+| `make clear-pinned-keymap`             | Remove Studio-saved bindings without losing pairings               |
 
 The individual lint and format targets are `lint-c`, `lint-python`,
 `lint-shell`, `lint-yaml`, `format-c`, `format-python`, and `format-shell`.
@@ -190,18 +190,18 @@ Settings is latched and blocks normal typing. Any thumb returns to Base, as does
 the outer-column squeeze. Most controls are on the left half; the right retains
 its bootloader corner and illuminated exit positions.
 
-| Position | Color | Action |
-| --- | --- | --- |
-| Left/right top outer corner | red | Enter that half's bootloader |
-| `1`–`4` | blue | Select Bluetooth profile 1–4 |
-| Selected profile | green / white | Connected / advertising |
-| `5` | red | Clear all four host pairings; irreversible |
-| Left outer key, second row | orange | Unlock ZMK Studio |
-| `Q` / `W` | teal / light blue | Prefer USB / Bluetooth output |
-| Preferred output | green | Currently selected output preference |
-| `S` / `D` / `F` | yellow | RGB toggle / brightness down / brightness up |
-| `B` | green | Show battery levels on both halves |
-| Any thumb | white | Return to Base |
+| Position                    | Color             | Action                                       |
+| --------------------------- | ----------------- | -------------------------------------------- |
+| Left/right top outer corner | red               | Enter that half's bootloader                 |
+| `1`–`4`                     | blue              | Select Bluetooth profile 1–4                 |
+| Selected profile            | green / white     | Connected / advertising                      |
+| `5`                         | red               | Clear all four host pairings; irreversible   |
+| Left outer key, second row  | orange            | Unlock ZMK Studio                            |
+| `Q` / `W`                   | teal / light blue | Prefer USB / Bluetooth output                |
+| Preferred output            | green             | Currently selected output preference         |
+| `S` / `D` / `F`             | yellow            | RGB toggle / brightness down / brightness up |
+| `B`                         | green             | Show battery levels on both halves           |
+| Any thumb                   | white             | Return to Base                               |
 
 `BT_CLR_ALL` clears host profiles but not the separate bond between keyboard
 halves. Only `reset.uf2` erases all settings.

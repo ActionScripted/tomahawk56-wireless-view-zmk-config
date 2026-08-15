@@ -779,9 +779,8 @@ rect.key { filter: drop-shadow(1px 1px 0 #60666c); }
 <g transform="translate(30, 447)" class="layer-Symbols">
 <text x="0" y="28" class="label" id="Symbols">Symbols:</text>
 <g transform="translate(0, 56)">
-<g transform="translate(28, 62)" class="key trans keypos-0">
-<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
-<text x="0" y="0" class="key trans tap">▽</text>
+<g transform="translate(28, 62)" class="key keypos-0">
+<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 </g>
 <g transform="translate(84, 62)" class="key trans keypos-1">
 <rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
@@ -823,13 +822,11 @@ rect.key { filter: drop-shadow(1px 1px 0 #60666c); }
 <rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
 <text x="0" y="0" class="key trans tap">▽</text>
 </g>
-<g transform="translate(777, 62)" class="key trans keypos-11">
-<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
-<text x="0" y="0" class="key trans tap">▽</text>
+<g transform="translate(777, 62)" class="key keypos-11">
+<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 </g>
-<g transform="translate(28, 119)" class="key trans keypos-12">
-<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
-<text x="0" y="0" class="key trans tap">▽</text>
+<g transform="translate(28, 119)" class="key keypos-12">
+<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 </g>
 <g transform="translate(84, 119)" class="key keypos-13">
 <rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
@@ -871,13 +868,11 @@ rect.key { filter: drop-shadow(1px 1px 0 #60666c); }
 <rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 <text x="0" y="0" class="key tap">?</text>
 </g>
-<g transform="translate(777, 119)" class="key trans keypos-23">
-<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
-<text x="0" y="0" class="key trans tap">▽</text>
+<g transform="translate(777, 119)" class="key keypos-23">
+<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 </g>
-<g transform="translate(28, 175)" class="key trans keypos-24">
-<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
-<text x="0" y="0" class="key trans tap">▽</text>
+<g transform="translate(28, 175)" class="key keypos-24">
+<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 </g>
 <g transform="translate(84, 175)" class="key keypos-25">
 <rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
@@ -919,13 +914,11 @@ rect.key { filter: drop-shadow(1px 1px 0 #60666c); }
 <rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 <text x="0" y="0" class="key tap">.</text>
 </g>
-<g transform="translate(777, 175)" class="key trans keypos-35">
-<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
-<text x="0" y="0" class="key trans tap">▽</text>
+<g transform="translate(777, 175)" class="key keypos-35">
+<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 </g>
-<g transform="translate(28, 231)" class="key trans keypos-36">
-<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
-<text x="0" y="0" class="key trans tap">▽</text>
+<g transform="translate(28, 231)" class="key keypos-36">
+<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 </g>
 <g transform="translate(84, 231)" class="key keypos-37">
 <rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
@@ -967,9 +960,8 @@ rect.key { filter: drop-shadow(1px 1px 0 #60666c); }
 <rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 <text x="0" y="0" class="key tap">&gt;</text>
 </g>
-<g transform="translate(777, 231)" class="key trans keypos-47">
-<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>
-<text x="0" y="0" class="key trans tap">▽</text>
+<g transform="translate(777, 231)" class="key keypos-47">
+<rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key"/>
 </g>
 <g transform="translate(197, 253)" class="key trans keypos-48">
 <rect rx="6" ry="6" x="-25" y="-25" width="50" height="50" class="key trans"/>

@@ -218,16 +218,16 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         symbols_layer {
             display-name = "Symbols";
 // ----------------------------------------------------------------------------------------------------------------
-// | TRNS |TRNS |TRNS | TRNS | TRNS | TRNS |        | TRNS |TRNS |TRNS |TRNS |TRNS |TRNS |
-// | TRNS |  ^  |  /  |  *   |  +   |  \  |        |  =   |  !  |  &  |  |  |  ?  |TRNS |
-// | TRNS |  #  |  @  |  _   |  -   |  $   |        |  %   |  :  |  ;  |  ,  |  .  |TRNS |
-// | TRNS |  <  |  [  |  (   |  {   |  ~   |        |  `   |  }  |  )  |  ]  |  >  |TRNS |
+// | NONE |TRNS |TRNS | TRNS | TRNS | TRNS |        | TRNS |TRNS |TRNS |TRNS |TRNS |NONE |
+// | NONE |  ^  |  /  |  *   |  +   |  \  |        |  =   |  !  |  &  |  |  |  ?  |NONE |
+// | NONE |  #  |  @  |  _   |  -   |  $   |        |  %   |  :  |  ;  |  ,  |  .  |NONE |
+// | NONE |  <  |  [  |  (   |  {   |  ~   |        |  `   |  }  |  )  |  ]  |  >  |NONE |
 //              |TRNS |TRNS  |CMD/TOG|TRNS |       |TRNS |CMD/TOG|TRNS |TRNS |
             bindings = <
-&trans  &trans     &trans     &trans     &trans      &trans      &trans     &trans      &trans    &trans     &trans  &trans
-&trans  &kp CARET  &kp FSLH   &kp STAR   &kp PLUS    &kp BSLH    &kp EQUAL  &kp EXCL    &kp AMPS  &kp PIPE   &kp QMARK &trans
-&trans  &kp HASH   &kp AT     &kp UNDER  &kp MINUS   &kp DOLLAR  &kp PRCNT  &kp COLON   &kp SEMI  &kp COMMA  &kp DOT   &trans
-&trans  &kp LT     &kp LBKT   &kp LPAR   &kp LBRC    &kp TILDE   &kp GRAVE  &kp RBRC    &kp RPAR  &kp RBKT   &kp GT    &trans
+&none  &trans     &trans     &trans     &trans      &trans      &trans     &trans      &trans    &trans     &trans  &none
+&none  &kp CARET  &kp FSLH   &kp STAR   &kp PLUS    &kp BSLH    &kp EQUAL  &kp EXCL    &kp AMPS  &kp PIPE   &kp QMARK &none
+&none  &kp HASH   &kp AT     &kp UNDER  &kp MINUS   &kp DOLLAR  &kp PRCNT  &kp COLON   &kp SEMI  &kp COMMA  &kp DOT   &none
+&none  &kp LT     &kp LBKT   &kp LPAR   &kp LBRC    &kp TILDE   &kp GRAVE  &kp RBRC    &kp RPAR  &kp RBKT   &kp GT    &none
                    &trans  &trans  &cmd_tog LGUI L_SYM  &trans    &trans  &cmd_tog RGUI L_SYM  &trans  &trans
             >;
         };
