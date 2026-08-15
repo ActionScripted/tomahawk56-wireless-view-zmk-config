@@ -66,12 +66,10 @@ def render_css(source: str) -> str:
             hue, saturation, brightness = palette[color]
             rgb = colorsys.hsv_to_rgb(hue / 360, saturation / 100, brightness / 100)
             hex_color = "#" + "".join(f"{round(channel * 255):02x}" for channel in rgb)
-            shadow = "  filter: drop-shadow(0 0 1px #57606a);\n" if color == "COLOR_WHITE" else ""
-            blocks.append(
-                f"{selectors}\n{{\n  stroke: {hex_color};\n{shadow}  stroke-width: 3px;\n}}"
-            )
+            blocks.append(f"{selectors}\n{{\n  stroke: {hex_color};\n  stroke-width: 3px;\n}}")
 
     header = (
+        "rect.key { filter: drop-shadow(1px 1px 0 #60666c); }\n\n"
         f"/* Generated from {RENDERER.as_posix()}; do not edit. */\n"
         "/* Unlit keys retain keymap-drawer's default border. */"
     )

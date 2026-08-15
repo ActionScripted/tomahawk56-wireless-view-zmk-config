@@ -172,23 +172,6 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
     combos {
         compatible = "zmk,combos";
 
-        /* Mirrored pairs unlikely to roll in normal prose. */
-        escape_left {
-            timeout-ms = <35>;
-            require-prior-idle-ms = <100>;
-            key-positions = <39 40>; /* C + V */
-            bindings = <&kp ESC>;
-            layers = <L_BASE>;
-        };
-
-        escape_right {
-            timeout-ms = <35>;
-            require-prior-idle-ms = <100>;
-            key-positions = <43 44>; /* M + , */
-            bindings = <&kp ESC>;
-            layers = <L_BASE>;
-        };
-
         /*
          * Both positions are &none on every layer, so Settings needs no
          * prior-idle guard. Including L_SET makes the same squeeze exit.
@@ -270,13 +253,13 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             display-name = "Magic";
 // ----------------------------------------------------------------------------------------------------------------
 // | NONE | NONE | NONE  | NONE | NONE | NONE |       | NONE | NONE | NONE | NONE | NONE | NONE |
-// | NONE | RGB  | BRI-  | BRI+ | NONE | NONE |       | NONE | MB1  | MB3  | MB2  | NONE | NONE |
+// | NONE | NONE | NONE  | NONE | NONE | NONE |       | NONE | MB1  | MB3  | MB2  | NONE | NONE |
 // | NONE | LOCK | SOUND | DOCK | SHOT | NONE |       | M<   | Mv   | M^   | M>   | MB4  | NONE |
 // | NONE | NONE | NONE  | NONE | NONE | NONE |       | S<   | Sv   | S^   | S>   | MB5  | NONE |
 //                    |TRNS |TRNS |CMD/TOG|TRNS |     |TRNS |CMD/TOG|TRNS |TRNS |
             bindings = <
 &none  &none                 &none                  &none               &none        &none       &none              &none              &none             &none               &none       &none
-&none  LRGB(RGB_TOG_CMD)     LRGB(RGB_BRD_CMD)      LRGB(RGB_BRI_CMD)  &none        &none       &none              &mkp MB1           &mkp MB3          &mkp MB2            &none       &none
+&none  &none                 &none                  &none               &none        &none       &none              &mkp MB1           &mkp MB3          &mkp MB2            &none       &none
 &none  &lock_screen          &sound_prefs           &kp LG(LA(D))       &screenshot  &none       &mmv MOVE_LEFT     &mmv MOVE_DOWN     &mmv MOVE_UP      &mmv MOVE_RIGHT     &mkp MB4   &none
 &none  &none                 &none                  &none               &none        &none       &msc SCRL_LEFT     &msc SCRL_DOWN     &msc SCRL_UP      &msc SCRL_RIGHT     &mkp MB5   &none
                             &trans  &trans  &cmd_tog LGUI L_MAGIC  &trans    &trans  &cmd_tog RGUI L_MAGIC  &trans  &trans

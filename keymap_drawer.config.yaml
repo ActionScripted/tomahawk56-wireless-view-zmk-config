@@ -1,6 +1,8 @@
 draw_config:
   dark_mode: true
   footer_text: Generated from config/tomahawk56.keymap
+  inner_pad_h: 3
+  inner_pad_w: 3
   shrink_wide_legends: 6
 
 parse_config:
