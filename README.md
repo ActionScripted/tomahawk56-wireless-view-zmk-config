@@ -31,6 +31,7 @@ Run `make help` for the same list at the command line.
 | `make build-left` | Build only the central/left firmware |
 | `make build-right` | Build only the peripheral/right firmware |
 | `make build-reset` | Build only the settings-reset image |
+| `make keymap` | Generate `docs/keymap.svg` locally from the ZMK keymap |
 | `make test` | Run all 19 native-simulator behavior tests |
 | `make lint` | Check C, Python, shell, and YAML files |
 | `make format` | Format repository-owned C, Python, and shell files |
@@ -145,6 +146,23 @@ position and layer. Editing options include:
   visual editor
 - [ZMK Studio](https://zmk.studio/download) for live USB editing on the left half
 - direct devicetree editing for behaviors, combos, macros, and bindings
+
+Generate the version-controlled keymap graphic locally after changing the
+keymap:
+
+```sh
+make keymap
+```
+
+The command uses the pinned `keymap-drawer` CLI, the checked-out Tomahawk56
+physical layout from `.build/west/`, and the friendly labels in
+`keymap_drawer.config.yaml`. It writes `docs/keymap.svg` without using a hosted
+renderer. Colored key borders are generated from the firmware renderer's
+static per-layer lighting maps; Settings shows the normal profile and output
+colors rather than their runtime-selected highlights. Run `make setup` or
+`make init` first if the West workspace is absent.
+
+[![Generated Tomahawk56 keymap](docs/keymap.svg)](docs/keymap.svg)
 
 ZMK Studio is locked by default. Enter Settings and press the orange outer key
 on the second row to unlock it. Saving in Studio writes bindings to the board's

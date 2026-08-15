@@ -1,0 +1,58 @@
+draw_config:
+  dark_mode: true
+  footer_text: Generated from config/tomahawk56.keymap
+  shrink_wide_legends: 6
+
+parse_config:
+  layer_legend_map:
+    Functional: Func
+    Symbols: Sym
+  mark_alternate_layer_activators: true
+  raw_binding_map:
+    "&bootloader": BOOT
+    "&bt BT_SEL 0": BT 1
+    "&bt BT_SEL 1": BT 2
+    "&bt BT_SEL 2": BT 3
+    "&bt BT_SEL 3": BT 4
+    "&bt BT_CLR_ALL": CLR ALL
+    "&cmd_tog LGUI 1": {t: LOCK, h: LGUI}
+    "&cmd_tog LGUI 2": {t: LOCK, h: LGUI}
+    "&cmd_tog LGUI 3": {t: LOCK, h: LGUI}
+    "&cmd_tog RGUI 1": {t: LOCK, h: RGUI}
+    "&cmd_tog RGUI 2": {t: LOCK, h: RGUI}
+    "&cmd_tog RGUI 3": {t: LOCK, h: RGUI}
+    "&ind_bat": BATT
+    "&kp DOWN": "$$mdi:arrow-down$$"
+    "&kp C_NEXT": "$$mdi:skip-next$$"
+    "&kp C_PP": "$$mdi:play-pause$$"
+    "&kp C_PREV": "$$mdi:skip-previous$$"
+    "&kp C_VOL_DN": "$$mdi:volume-minus$$"
+    "&kp C_VOL_UP": "$$mdi:volume-plus$$"
+    "&kp LEFT": "$$mdi:arrow-left$$"
+    "&kp LG(LA(D))": DOCK
+    "&kp RIGHT": "$$mdi:arrow-right$$"
+    "&kp UP": "$$mdi:arrow-up$$"
+    "&lock_screen": LOCK
+    "&lrgb_sync (0x100 + (RGB_BRD_CMD)) 0": BRI-
+    "&lrgb_sync (0x100 + (RGB_BRI_CMD)) 0": BRI+
+    "&lrgb_sync (0x100 + (RGB_TOG_CMD)) 0": RGB
+    "&lrgb_sync (0x200 + (OUT_BLE)) 0": BLE
+    "&lrgb_sync (0x200 + (OUT_USB)) 0": USB
+    "&mkp MB1": MB1
+    "&mkp MB2": MB2
+    "&mkp MB3": MB3
+    "&mkp MB4": MB4
+    "&mkp MB5": MB5
+    "&mmv MOVE_DOWN": M↓
+    "&mmv MOVE_LEFT": M←
+    "&mmv MOVE_RIGHT": M→
+    "&mmv MOVE_UP": M↑
+    "&msc SCRL_DOWN": S↓
+    "&msc SCRL_LEFT": S←
+    "&msc SCRL_RIGHT": S→
+    "&msc SCRL_UP": S↑
+    "&screenshot": SHOT
+    "&sound_prefs": SOUND
+    "&studio_unlock": UNLOCK
+    "&to 0": EXIT
+    "&tog 4": SET

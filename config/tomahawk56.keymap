@@ -238,13 +238,13 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 // | TRNS |TRNS |TRNS | TRNS | TRNS | TRNS |        | TRNS |TRNS |TRNS |TRNS |TRNS |TRNS |
 // | TRNS |  ^  |  /  |  *   |  +   |  \  |        |  =   |  !  |  &  |  |  |  ?  |TRNS |
 // | TRNS |  #  |  @  |  _   |  -   |  $   |        |  %   |  :  |  ;  |  ,  |  .  |TRNS |
-// | TRNS |  <  |  (  |  [   |  {   |  ~   |        |  `   |  }  |  ]  |  )  |  >  |TRNS |
+// | TRNS |  <  |  [  |  (   |  {   |  ~   |        |  `   |  }  |  )  |  ]  |  >  |TRNS |
 //              |TRNS |TRNS  |CMD/TOG|TRNS |       |TRNS |CMD/TOG|TRNS |TRNS |
             bindings = <
 &trans  &trans     &trans     &trans     &trans      &trans      &trans     &trans      &trans    &trans     &trans  &trans
 &trans  &kp CARET  &kp FSLH   &kp STAR   &kp PLUS    &kp BSLH    &kp EQUAL  &kp EXCL    &kp AMPS  &kp PIPE   &kp QMARK &trans
 &trans  &kp HASH   &kp AT     &kp UNDER  &kp MINUS   &kp DOLLAR  &kp PRCNT  &kp COLON   &kp SEMI  &kp COMMA  &kp DOT   &trans
-&trans  &kp LT     &kp LPAR   &kp LBKT   &kp LBRC    &kp TILDE   &kp GRAVE  &kp RBRC    &kp RBKT  &kp RPAR   &kp GT    &trans
+&trans  &kp LT     &kp LBKT   &kp LPAR   &kp LBRC    &kp TILDE   &kp GRAVE  &kp RBRC    &kp RPAR  &kp RBKT   &kp GT    &trans
                    &trans  &trans  &cmd_tog LGUI L_SYM  &trans    &trans  &cmd_tog RGUI L_SYM  &trans  &trans
             >;
         };

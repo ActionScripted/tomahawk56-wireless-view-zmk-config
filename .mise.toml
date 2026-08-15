@@ -5,6 +5,7 @@ ruff = "0.16.2"
 shellcheck = "0.11.0"
 shfmt = "3.13.1"
 yamllint = "1.38.0"
+"pipx:keymap-drawer" = "0.23.0"
 
 [tasks.lint-c]
 description = "Check repository-owned C formatting"
@@ -52,14 +53,14 @@ shfmt -i 2 -ci -d "${files[@]}"
 
 [tasks.lint-yaml]
 description = "yamllint on YAML files"
-usage = 'arg "[files]" var=#true help="files to lint (default: compose.yaml, build.yaml, lefthook.yml, workflow files)"'
+usage = 'arg "[files]" var=#true help="files to lint (default: repository YAML configuration and workflows)"'
 run = '''
 #!/usr/bin/env bash
 set -euo pipefail
 if [ -n "${usage_files:-}" ]; then
   read -r -a files <<<"$usage_files"
 else
-  files=(compose.yaml build.yaml lefthook.yml .github/workflows/*.yml)
+  files=(compose.yaml build.yaml keymap_drawer.config.yaml lefthook.yml .github/workflows/*.yml)
 fi
 yamllint "${files[@]}"
 '''
