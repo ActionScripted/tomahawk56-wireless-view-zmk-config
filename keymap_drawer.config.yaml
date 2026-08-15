@@ -15,12 +15,12 @@ parse_config:
     "&bt BT_SEL 2": BT 3
     "&bt BT_SEL 3": BT 4
     "&bt BT_CLR_ALL": CLR ALL
-    "&cmd_tog LGUI 1": {t: LOCK, h: LGUI}
-    "&cmd_tog LGUI 2": {t: LOCK, h: LGUI}
-    "&cmd_tog LGUI 3": {t: LOCK, h: LGUI}
-    "&cmd_tog RGUI 1": {t: LOCK, h: RGUI}
-    "&cmd_tog RGUI 2": {t: LOCK, h: RGUI}
-    "&cmd_tog RGUI 3": {t: LOCK, h: RGUI}
+    "&cmd_tog LGUI L_SYM": {t: LOCK, h: LGUI}
+    "&cmd_tog LGUI L_FUNC": {t: LOCK, h: LGUI}
+    "&cmd_tog LGUI L_MAGIC": {t: LOCK, h: LGUI}
+    "&cmd_tog RGUI L_SYM": {t: LOCK, h: RGUI}
+    "&cmd_tog RGUI L_FUNC": {t: LOCK, h: RGUI}
+    "&cmd_tog RGUI L_MAGIC": {t: LOCK, h: RGUI}
     "&ind_bat": BATT
     "&kp DOWN": "$$mdi:arrow-down$$"
     "&kp C_NEXT": "$$mdi:skip-next$$"
@@ -33,11 +33,11 @@ parse_config:
     "&kp RIGHT": "$$mdi:arrow-right$$"
     "&kp UP": "$$mdi:arrow-up$$"
     "&lock_screen": LOCK
-    "&lrgb_sync (0x100 + (RGB_BRD_CMD)) 0": BRI-
-    "&lrgb_sync (0x100 + (RGB_BRI_CMD)) 0": BRI+
-    "&lrgb_sync (0x100 + (RGB_TOG_CMD)) 0": RGB
-    "&lrgb_sync (0x200 + (OUT_BLE)) 0": BLE
-    "&lrgb_sync (0x200 + (OUT_USB)) 0": USB
+    "LRGB(RGB_BRD_CMD)": BRI-
+    "LRGB(RGB_BRI_CMD)": BRI+
+    "LRGB(RGB_TOG_CMD)": RGB
+    "LOUT(OUT_BLE)": BLE
+    "LOUT(OUT_USB)": USB
     "&mkp MB1": MB1
     "&mkp MB2": MB2
     "&mkp MB3": MB3
@@ -54,5 +54,5 @@ parse_config:
     "&screenshot": SHOT
     "&sound_prefs": SOUND
     "&studio_unlock": UNLOCK
-    "&to 0": EXIT
-    "&tog 4": SET
+    "&to L_BASE": EXIT
+    "&tog L_SET": SET

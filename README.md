@@ -147,20 +147,17 @@ position and layer. Editing options include:
 - [ZMK Studio](https://zmk.studio/download) for live USB editing on the left half
 - direct devicetree editing for behaviors, combos, macros, and bindings
 
-Generate the version-controlled keymap graphic locally after changing the
-keymap:
+Regenerate the checked-in keymap graphic after changing the keymap:
 
 ```sh
 make keymap
 ```
 
-The command uses the pinned `keymap-drawer` CLI, the checked-out Tomahawk56
-physical layout from `.build/west/`, and the friendly labels in
-`keymap_drawer.config.yaml`. It writes `docs/keymap.svg` without using a hosted
-renderer. Colored key borders are generated from the firmware renderer's
-static per-layer lighting maps; Settings shows the normal profile and output
-colors rather than their runtime-selected highlights. Run `make setup` or
-`make init` first if the West workspace is absent.
+`make keymap` runs the pinned local `keymap-drawer` with the West physical
+layout, the display config, and borders derived from the firmware's static
+underglow maps. It writes `docs/keymap.svg`; runtime Bluetooth and output
+highlights are intentionally not shown. Run `make init` first if the physical
+layout is missing.
 
 [![Generated Tomahawk56 keymap](docs/keymap.svg)](docs/keymap.svg)
 

@@ -22,10 +22,9 @@ help: ## Show available commands
 	}' $(MAKEFILE_LIST)
 
 RUN := docker compose run --rm zmk
+KEYMAP_DRAWER := mise exec -- keymap -c keymap_drawer.config.yaml
 KEYMAP_LAYOUT := .build/west/zmk/app/dts/layouts/mityaliu/tomahawk56.dtsi
-KEYMAP_YAML := .build/keymap/tomahawk56.yaml
-KEYMAP_COLORS := .build/keymap/colors.yaml
-KEYMAP_SVG := docs/keymap.svg
+KEYMAP_BUILD := .build/keymap
 
 # ---
 # SETUP
@@ -69,17 +68,15 @@ distclean: ## Full reset: remove dependencies and all generated output
 # DOCUMENTATION
 
 keymap: ## Generate docs/keymap.svg from the ZMK keymap
-	@if [ ! -f "$(KEYMAP_LAYOUT)" ]; then \
-		echo "Missing $(KEYMAP_LAYOUT); run 'make init' first." >&2; \
-		exit 1; \
-	fi
-	@mkdir -p $(dir $(KEYMAP_YAML)) $(dir $(KEYMAP_SVG))
-	@mise exec -- keymap -c keymap_drawer.config.yaml parse \
-		-z config/tomahawk56.keymap -c 12 -o $(KEYMAP_YAML)
-	@./scripts/keymap-colors.py \
-		config/src/tomahawk56_layer_rgb_renderer.c $(KEYMAP_COLORS)
-	@mise exec -- keymap -c keymap_drawer.config.yaml draw \
-		$(KEYMAP_YAML) $(KEYMAP_COLORS) -d $(KEYMAP_LAYOUT) -o $(KEYMAP_SVG)
+	@test -f "$(KEYMAP_LAYOUT)" || { \
+		echo "Missing $(KEYMAP_LAYOUT); run 'make init' first." >&2; exit 1; \
+	}
+	@mkdir -p $(KEYMAP_BUILD) docs
+	@$(KEYMAP_DRAWER) parse -z config/tomahawk56.keymap -c 12 \
+		-o $(KEYMAP_BUILD)/tomahawk56.yaml
+	@./scripts/keymap-colors.py
+	@$(KEYMAP_DRAWER) draw $(KEYMAP_BUILD)/tomahawk56.yaml \
+		$(KEYMAP_BUILD)/colors.yaml -d $(KEYMAP_LAYOUT) -o docs/keymap.svg
 
 # ---
 # FLASH (host, not Docker - needs to see the USB drive)
