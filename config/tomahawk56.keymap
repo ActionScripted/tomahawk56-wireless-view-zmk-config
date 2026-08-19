@@ -131,14 +131,14 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
             bindings = <&kp>, <&kp>;
         };
 
-        /* The longer idle guard keeps Space a tap during continuous typing. */
+        /* The idle guard keeps Space a tap during continuous typing. */
         safe_space_mt: safe_space_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
             flavor = "balanced";
             tapping-term-ms = <225>;
             quick-tap-ms = <200>;
-            require-prior-idle-ms = <150>;
+            require-prior-idle-ms = <80>;
             bindings = <&kp>, <&kp>;
         };
     };

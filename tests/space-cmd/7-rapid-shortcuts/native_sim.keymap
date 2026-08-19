@@ -1,0 +1,19 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * Rapid shortcuts: finish Cmd+A, then press Space/Cmd 90 ms after A went
+ * down and nest B inside it. This models a quick Cmd+C followed by Cmd+V;
+ * both thumb presses must resolve to Cmd rather than emitting Space and B.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(1,0,30)
+        ZMK_MOCK_RELEASE(1,0,30)
+        ZMK_MOCK_RELEASE(0,0,10)
+    >;
+};

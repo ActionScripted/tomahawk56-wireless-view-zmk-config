@@ -17,3 +17,4 @@ diffed against `keycode_events.snapshot`, and any difference fails the case.
 | 4-deliberate-cmd-chord | space held alone 600 ms, then A | Cmd+A chord |
 | 5-tap-then-hold-repeat | tap space, re-press 60 ms later, hold | Space auto-repeat |
 | 6-lazy-overlap-roll | thumb rests on space ~150 ms while A is rolled | "space a", no Cmd |
+| 7-rapid-shortcuts | Cmd+A, then Cmd+B 90 ms after A | both shortcuts use Cmd |
