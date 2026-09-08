@@ -84,11 +84,14 @@ make lint
 git diff --check
 ```
 
-The 19 tests feed timed key events into ZMK's native simulator and compare
-emitted keycodes with snapshots. They cover home-row layer taps, Space/Cmd, and
-the other thumb modifiers; each directory under `tests/` documents its timing
-invariants. Golden `events.patterns` and `keycode_events.snapshot` files should
-change only when behavior intentionally changes.
+The simulator cases feed timed key events into ZMK and compare keycodes and
+hold/tap decisions with explicit expectations. They cover home-row layer taps,
+Space/Cmd, the other thumb modifiers, and interactions using selected production
+bindings. Before each run, `scripts/check-test-behaviors.py` verifies the shared
+behavior definitions and selected bindings against `config/tomahawk56.keymap`.
+Each directory under `tests/` documents its scenarios. Golden `events.patterns`
+and `keycode_events.snapshot` files should change only when behavior intentionally
+changes.
 
 Test build directories and compiler caches are retained under `.build`, so
 unchanged reruns avoid pristine firmware rebuilds. During development, run a
@@ -181,15 +184,34 @@ The five-layer layout is derived from Dygma Defy's Cruiser layout:
 - Hold `F` or `J` for Symbols.
 - Hold `D` or `K` for Functional.
 - Hold `S` or `L` for Magic.
-- Press `C+V` or `M+,` on Base for a one-handed Escape.
 - On an active layer, tap either Space/Cmd thumb to latch or unlatch that layer;
   hold it for Cmd.
 - Squeeze the lower two keys of either outer column for Settings.
 
-The mirrored thumbs tap Tab, Backspace, Space, and Enter and hold Ctrl, Shift,
-Cmd, and Option. A deliberate chord resolves when its nested key is released;
-a typing roll where the thumb is released first remains a tap. To repeat Space
-or Backspace, tap and re-press it within its quick-tap window.
+Layer holds resolve on the next key's press on either hand, so `D` then `F`
+can hold Option+Control without waiting for `F` to be released. Holding a layer
+letter alone activates its layer after 175 ms. The 100 ms prior-idle guard and
+200 ms repeated-letter window still force typing for qualifying presses;
+holding longer cannot turn those presses into layers. Outside those guards,
+overlapping letters can activate a layer.
+
+The mirrored thumbs tap Tab, Backspace, and Space; the inner left thumb taps
+Escape and the inner right taps Enter. Their holds are Ctrl, Shift, Cmd, and
+Option. Ctrl, Shift, and Option activate on the next key's press or after a
+175 ms hold, even immediately after typing or tapping the same thumb. Release
+a thumb before pressing the next key when its tap action is intended.
+
+Shift/Backspace has an independent behavior. Tapping Backspace and immediately
+holding or chording the same thumb now produces Shift, allowing a correction
+followed by capitalization. For repeated deletion, tap Backspace repeatedly or
+hold the plain Backspace on Functional (`D`/`K` held, then `Y`).
+
+Space/Cmd on Base retains its typing protection: a recent typing key can force
+Space, otherwise Cmd resolves when a nested key is released or after 225 ms.
+Tap and re-press Space within its 200 ms quick-tap window to repeat it. On an
+active layer, the same thumbs tap to toggle that layer and activate Cmd on the
+next key's press or after 225 ms; a recent toggle tap does not force another
+toggle.
 
 ### Settings layer
 

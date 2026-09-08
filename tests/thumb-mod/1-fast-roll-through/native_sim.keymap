@@ -1,6 +1,6 @@
 #include "../behavior_keymap.dtsi"
 
-/* Thumb released before A remains a Backspace then A typing roll. */
+/* Shift activates on A down, even if the thumb comes up before A. */
 &kscan {
     events = <
         ZMK_MOCK_PRESS(0,0,30)

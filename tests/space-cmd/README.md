@@ -7,7 +7,8 @@ Run with `make test`. Each case uses ZMK's snapshot test format
 (`zmk/app/tests`): `native_sim.keymap` feeds timed key events into the firmware
 built for the native simulator, output lines matching `events.patterns` are
 diffed against `keycode_events.snapshot`, and any difference fails the case.
-`behavior_keymap.dtsi` must mirror the real `safe_space_mt` definition.
+The shared `tests/hold-taps.dtsi` definition is checked against production
+before the simulator runs.
 
 | Case | Scenario | Expectation |
 | --- | --- | --- |

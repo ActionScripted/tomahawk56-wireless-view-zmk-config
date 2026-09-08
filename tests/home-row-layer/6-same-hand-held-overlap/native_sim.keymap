@@ -2,8 +2,7 @@
 
 /*
  * Same-hand overlap where the nested key is still held when the tapping term
- * expires. The positional guard must still force a tap: this is "sc" typed
- * with a lazy left hand, not a layer chord.
+ * expires. It must already have activated the layer on the target's press.
  */
 &kscan {
     events = <

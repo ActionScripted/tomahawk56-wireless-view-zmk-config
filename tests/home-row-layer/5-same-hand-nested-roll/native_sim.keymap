@@ -1,6 +1,6 @@
 #include "../behavior_keymap.dtsi"
 
-/* A nested key on the same hand is excluded by the positional trigger list. */
+/* Same-hand targets are eligible for immediate layer activation too. */
 &kscan {
     events = <
         ZMK_MOCK_PRESS(0,0,30)

@@ -1,4 +1,3 @@
-kp_pressed: usage_page 0x07 keycode 0x16 implicit_mods 0x00 explicit_mods 0x00
-kp_pressed: usage_page 0x07 keycode 0x06 implicit_mods 0x00 explicit_mods 0x00
-kp_released: usage_page 0x07 keycode 0x06 implicit_mods 0x00 explicit_mods 0x00
-kp_released: usage_page 0x07 keycode 0x16 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 0 decided hold-interrupt (hold-preferred decision moment other-key-down)
+kp_pressed: usage_page 0x07 keycode 0x07 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x07 implicit_mods 0x00 explicit_mods 0x00

@@ -1,0 +1,23 @@
+#include "../behavior_keymap.dtsi"
+
+/* A typing key 30 ms before each Shift must not veto capitalization. Both thumbs must shift a quote and release cleanly for the following plain apostrophe. */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(3,0,10)
+        ZMK_MOCK_RELEASE(3,0,20)
+        ZMK_MOCK_PRESS(1,2,30)
+        ZMK_MOCK_PRESS(2,0,30)
+        ZMK_MOCK_RELEASE(2,0,30)
+        ZMK_MOCK_RELEASE(1,2,20)
+        ZMK_MOCK_PRESS(2,0,30)
+        ZMK_MOCK_RELEASE(2,0,300)
+        ZMK_MOCK_PRESS(3,0,10)
+        ZMK_MOCK_RELEASE(3,0,20)
+        ZMK_MOCK_PRESS(1,3,30)
+        ZMK_MOCK_PRESS(2,0,30)
+        ZMK_MOCK_RELEASE(2,0,30)
+        ZMK_MOCK_RELEASE(1,3,20)
+        ZMK_MOCK_PRESS(2,0,30)
+        ZMK_MOCK_RELEASE(2,0,300)
+    >;
+};

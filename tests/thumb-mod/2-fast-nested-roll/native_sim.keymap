@@ -2,7 +2,7 @@
 
 /*
  * A complete A tap nested inside the thumb press is an intentional fast chord.
- * Balanced resolves Shift on A's release without waiting for the timer.
+ * Shift must resolve on A's press without waiting for its release or the timer.
  */
 &kscan {
     events = <

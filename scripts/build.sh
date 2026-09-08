@@ -85,6 +85,7 @@ case "$command" in
     "$0" reset
     ;;
   test)
+    python3 "$REPOSITORY_ROOT/scripts/check-test-behaviors.py"
     require_init
     test_path="$REPOSITORY_ROOT/tests${2:+/$2}"
     if [ ! -d "$test_path" ]; then

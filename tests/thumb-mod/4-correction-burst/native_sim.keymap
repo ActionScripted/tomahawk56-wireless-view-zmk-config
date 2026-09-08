@@ -1,18 +1,14 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * The reported hardware misfire, reproduced: tap Backspace, press it again,
- * and roll a letter inside that second press.
- *
- * The re-press lands 210 ms after the first, deliberately outside the 200 ms
- * quick-tap window. Balanced treats the fully nested letter as a fast Shift
- * chord, producing one Backspace followed by a capital letter. This pins the
- * responsiveness tradeoff explicitly.
+ * Tap Backspace, re-press 60 ms after the first press, and chord A. Both the
+ * former 80 ms idle guard and 200 ms repeat window would veto this Shift.
+ * The intended output is one Backspace followed by Shift+A on A's press.
  */
 &kscan {
     events = <
         ZMK_MOCK_PRESS(0,0,40)
-        ZMK_MOCK_RELEASE(0,0,170)
+        ZMK_MOCK_RELEASE(0,0,20)
         ZMK_MOCK_PRESS(0,0,30)
         ZMK_MOCK_PRESS(0,1,30)
         ZMK_MOCK_RELEASE(0,1,30)

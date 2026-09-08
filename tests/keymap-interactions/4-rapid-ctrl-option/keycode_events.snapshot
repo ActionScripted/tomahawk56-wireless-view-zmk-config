@@ -1,0 +1,40 @@
+kp_pressed: usage_page 0x07 keycode 0x04 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x04 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 9 decided tap (hold-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x2B implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x2B implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 9 decided hold-interrupt (hold-preferred decision moment other-key-down)
+kp_pressed: usage_page 0x07 keycode 0xE0 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x34 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x34 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0xE0 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x04 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x04 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 10 decided tap (hold-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x29 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x29 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 10 decided hold-interrupt (hold-preferred decision moment other-key-down)
+kp_pressed: usage_page 0x07 keycode 0xE2 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x34 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x34 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0xE2 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x04 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x04 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 13 decided tap (hold-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x2B implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x2B implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 13 decided hold-interrupt (hold-preferred decision moment other-key-down)
+kp_pressed: usage_page 0x07 keycode 0xE4 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x34 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x34 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0xE4 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x04 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x04 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 14 decided tap (hold-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x28 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x28 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 14 decided hold-interrupt (hold-preferred decision moment other-key-down)
+kp_pressed: usage_page 0x07 keycode 0xE6 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x34 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x34 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0xE6 implicit_mods 0x00 explicit_mods 0x00

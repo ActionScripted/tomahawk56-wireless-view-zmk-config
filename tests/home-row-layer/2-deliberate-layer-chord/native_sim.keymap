@@ -2,8 +2,7 @@
 
 /*
  * A deliberate chord started 155 ms in - short of the 175 ms term. It must
- * still produce the symbol, resolving on the target key's release rather than
- * waiting out the timer. This is what makes a long tapping term free.
+ * produce the symbol on the target's press, before the timer can resolve it.
  */
 &kscan {
     events = <

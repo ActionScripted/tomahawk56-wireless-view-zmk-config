@@ -1,33 +1,12 @@
-/*
- * Mirror of safe_space_mt from config/tomahawk56.keymap: Space on tap, Cmd
- * (LGUI) for a nested chord or a hold past the tapping term. Keep the timings
- * identical: a drifted mirror passes while describing a keyboard that does not
- * exist.
- */
-
-#include <behaviors.dtsi>
-#include <dt-bindings/zmk/keys.h>
-#include <dt-bindings/zmk/kscan_mock.h>
+#include "../hold-taps.dtsi"
 
 / {
-    behaviors {
-        spc: safe_space_mod_tap {
-            compatible = "zmk,behavior-hold-tap";
-            #binding-cells = <2>;
-            flavor = "balanced";
-            tapping-term-ms = <225>;
-            quick-tap-ms = <200>;
-            require-prior-idle-ms = <80>;
-            bindings = <&kp>, <&kp>;
-        };
-    };
-
     keymap {
         compatible = "zmk,keymap";
 
         default_layer {
             bindings = <
-                &spc LGUI SPACE &kp A
+                &safe_space_mt LGUI SPACE &kp A
                 &kp B &kp C>;
         };
     };

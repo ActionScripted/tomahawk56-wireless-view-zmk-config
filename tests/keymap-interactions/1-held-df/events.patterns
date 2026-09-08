@@ -1,0 +1,4 @@
+s/.*hid_listener_keycode/kp/p
+s/.*decide_hold_tap/ht_decide/p
+s/.*set_layer_state: layer_changed: /layer: /p
+s/.*zmk_hid_implicit_modifiers_.*: Modifiers set to /mods: /p

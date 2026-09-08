@@ -1,0 +1,15 @@
+#include "../behavior_keymap.dtsi"
+
+/* A 60 ms Backspace re-press held alone must become Shift at 175 ms, not auto-repeat Backspace. Exercise both thumbs. */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(1,2,30)
+        ZMK_MOCK_RELEASE(1,2,30)
+        ZMK_MOCK_PRESS(1,2,210)
+        ZMK_MOCK_RELEASE(1,2,300)
+        ZMK_MOCK_PRESS(1,3,30)
+        ZMK_MOCK_RELEASE(1,3,30)
+        ZMK_MOCK_PRESS(1,3,210)
+        ZMK_MOCK_RELEASE(1,3,300)
+    >;
+};

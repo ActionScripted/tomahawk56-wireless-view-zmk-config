@@ -1,37 +1,17 @@
 /*
- * Mirror of layer_tap_left/layer_tap_right from config/tomahawk56.keymap. The
- * two production behaviors differ only in which half's positions they list, so
- * one behavior with a single opposite-hand trigger key stands in for both:
- * position 1 is "the other hand", positions 2 and 3 are "this hand".
- *
- * Keep the timings identical: a drifted mirror passes while describing a
- * keyboard that does not exist.
+ * Small layout for isolated layer decisions. The hand names in older case
+ * paths describe the gesture; the production behaviors now allow either hand.
  */
 
-#include <behaviors.dtsi>
-#include <dt-bindings/zmk/keys.h>
-#include <dt-bindings/zmk/kscan_mock.h>
+#include "../hold-taps.dtsi"
 
 / {
-    behaviors {
-        hr: home_row_layer_tap {
-            compatible = "zmk,behavior-hold-tap";
-            #binding-cells = <2>;
-            flavor = "balanced";
-            tapping-term-ms = <175>;
-            quick-tap-ms = <200>;
-            require-prior-idle-ms = <100>;
-            hold-trigger-key-positions = <1>;
-            bindings = <&mo>, <&kp>;
-        };
-    };
-
     keymap {
         compatible = "zmk,keymap";
 
         default_layer {
             bindings = <
-                &hr 1 S &kp A
+                &layer_tap_left 1 S &kp A
                 &kp C &kp D>;
         };
 

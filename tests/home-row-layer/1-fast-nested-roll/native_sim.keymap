@@ -1,6 +1,6 @@
 #include "../behavior_keymap.dtsi"
 
-/* A rolling opposite-hand overlap (S released first) remains ordinary typing. */
+/* After idle, even a roll activates the layer on the target's press. */
 &kscan {
     events = <
         ZMK_MOCK_PRESS(0,0,30)

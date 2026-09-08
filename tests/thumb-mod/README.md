@@ -1,21 +1,17 @@
-# Thumb modifier tests
+# Shift/Backspace checks
 
-These cases cover `safe_mt`, shared by Tab/Ctrl, Backspace/Shift, and
-Enter/Option. Backspace/Shift stands in for all six keys — same timing and
-resolution, only the keycodes differ. Space has its own `safe_space_mt`, covered
-by `tests/space-cmd/`.
+These cases exercise the independent `shift_mt` behavior. Its settings are
+checked against production before the simulator runs. Snapshots include the
+decision moment to distinguish key-down activation from delayed output.
 
-`safe_mt` is balanced: a key pressed and released while the thumb remains down
-resolves the modifier immediately, without waiting for the tapping term. A roll
-where the thumb is released before the letter remains a tap.
-
-| Case | Pins |
+| Case | Expected behavior |
 |---|---|
-| 1 fast-roll-through | thumb released first is a plain tap, never a modifier |
-| 2 fast-nested-chord | a letter tapped *inside* the thumb press gets Shift |
-| 3 timer-resolved-shift | a thumb held alone past the term is also the modifier |
-| 4 correction-burst | documents the fast-chord tradeoff after a Backspace re-press |
+| 1 fast-roll-through | Shift activates on the letter's press even if the thumb releases first |
+| 2 fast-nested-roll | a nested letter gets Shift immediately on key-down |
+| 3 deliberate-shift-chord | a thumb held alone past 175 ms activates Shift |
+| 4 correction-burst | tap Backspace, re-press after 60 ms, then chord Shift+A |
 
-Case 4 is the tradeoff: in a correction burst, a letter rolled fully inside a
-second Backspace press becomes a Shift chord once the re-press falls outside the
-quick-tap window. Releasing Backspace first keeps the normal typing roll (case 1).
+Backspace repetition requires separate taps or Functional-layer Backspace.
+`tests/keymap-interactions` additionally covers both thumbs, recent typing,
+apostrophes, home-row capitalization, and Ctrl/Option tap-to-chord transitions.
+Base Space/Cmd retains its separate policy in `tests/space-cmd`.

@@ -28,7 +28,7 @@
 #define LOUT(cmd) &lrgb_sync (0x200 + (cmd)) 0
 
 /*
- * Key positions, as used by hold-trigger-key-positions and the combos below:
+ * Key positions, as used by the combos below:
  * four rows of twelve, then eight thumbs.
  *
  *    0  1  2  3  4  5     6  7  8  9 10 11
@@ -53,81 +53,72 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         };
 
         /*
-         * Tap the letter, hold for the layer. One behavior per hand, because
-         * each triggers only from positions on the other hand. Each guard
-         * covers a distinct misfire, all pinned by tests/home-row-layer:
+         * Tap the letter, hold for the layer. Either hand's next key press
+         * resolves an eligible hold immediately, including D -> F while both
+         * keys remain down. Keep the per-hand behavior labels stable.
          *
-         *   balanced             a chord resolves on the target key's release
-         *   positional triggers  a same-hand neighbour forces a tap
-         *   quick-tap-ms         a doubled letter ("ss", "ll") stays typing
-         *   require-prior-idle   a key pressed mid-burst cannot start a layer
-         *
-         * Do not add hold-trigger-on-release: it defers the positional check to
-         * the first key released, leaving it unarmed when a same-hand neighbour
-         * is still held at the term (case 6). Keep the hold as plain &mo -
-         * &lrgb_sync is global-locality and would put a blocking split BLE send
-         * on the key-press path.
+         * The idle guard still forces taps during a typing burst, and quick
+         * taps protect doubled letters ("ss", "ll"). Outside those guards,
+         * overlapping letters can activate a layer even if released as a roll.
+         * Keep the hold as plain &mo: &lrgb_sync is global-locality and would
+         * put a blocking split BLE send on the key-press path.
          */
         layer_tap_left: layer_tap_left {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "balanced";
+            flavor = "hold-preferred";
             tapping-term-ms = <175>;
             quick-tap-ms = <200>;
             require-prior-idle-ms = <100>;
-            hold-trigger-key-positions = <
-                6 7 8 9 10 11
-                18 19 20 21 22 23
-                30 31 32 33 34 35
-                42 43 44 45 46 47
-                48 49 50 51 52 53 54 55>;
             bindings = <&mo>, <&kp>;
         };
 
         layer_tap_right: layer_tap_right {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "balanced";
+            flavor = "hold-preferred";
             tapping-term-ms = <175>;
             quick-tap-ms = <200>;
             require-prior-idle-ms = <100>;
-            hold-trigger-key-positions = <
-                0 1 2 3 4 5
-                12 13 14 15 16 17
-                24 25 26 27 28 29
-                36 37 38 39 40 41
-                48 49 50 51 52 53 54 55>;
             bindings = <&mo>, <&kp>;
         };
 
-        /* A nested tap resolves Cmd; an unchorded tap toggles the active layer. */
+        /* Chords resolve Cmd on key-down, even immediately after a toggle tap. */
         cmd_tog: cmd_tog {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "balanced";
+            flavor = "hold-preferred";
             tapping-term-ms = <225>;
-            quick-tap-ms = <125>;
+            quick-tap-ms = <0>;
             bindings = <&kp>, <&tog>;
         };
 
         /*
-         * Tab/Ctrl, Bspc/Shift, Enter/Option. Balanced resolves a deliberate
-         * chord as soon as the other key is released while the thumb is still
-         * down; a roll where the thumb comes up first stays a tap.
-         *
-         * require-prior-idle is roughly one keystroke interval - just enough to
-         * keep a correction burst (thumb pressed mid-typing, next letter tapped
-         * before the thumb rises) from eating the Bspc. Any larger and a
-         * deliberate hold right after a word turns Shift/Ctrl/Option into a
-         * stray Bspc/Tab/Enter.
+         * Tab/Ctrl and Escape/Enter/Option resolve chords on the next key-down.
+         * Recent typing and repeated taps must not veto the modifier.
          */
         safe_mt: safe_mod_tap {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "balanced";
+            flavor = "hold-preferred";
             tapping-term-ms = <175>;
-            quick-tap-ms = <200>;
-            require-prior-idle-ms = <80>;
+            quick-tap-ms = <0>;
+            require-prior-idle-ms = <0>;
+            bindings = <&kp>, <&kp>;
+        };
+
+        /*
+         * Shift has its own policy so capitalization can be tuned separately.
+         * Tap Backspace, then hold or chord to Shift immediately. There is no
+         * tap-then-hold Backspace repeat; use taps or Functional-layer Backspace.
+         */
+        shift_mt: shift_mod_tap {
+            compatible = "zmk,behavior-hold-tap";
+            #binding-cells = <2>;
+            flavor = "hold-preferred";
+            tapping-term-ms = <175>;
+            quick-tap-ms = <0>;
+            require-prior-idle-ms = <0>;
             bindings = <&kp>, <&kp>;
         };
 
@@ -204,14 +195,14 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
 //              |TAB/C|BSPC/S |SPACE/G|ESC/A  |      |ENTER/A|SPACE/G|BSPC/S|TAB/C |
 //
 // SET marks the outer pairs that enter Settings, squeezed two at a time; they
-// are dead on their own. No thumb repeats its tap keycode by being held - to
-// repeat Space or Bspc, tap and re-press within quick-tap-ms.
+// are dead on their own. Tap then re-press Space within quick-tap-ms to repeat
+// it. Backspace repeats via separate taps or the Functional-layer Backspace.
             bindings = <
 &none        &kp N1  &kp N2                    &kp N3                   &kp N4                  &kp N5       &kp N6  &kp N7                    &kp N8                   &kp N9                  &kp N0                  &none
 &none        &kp Q   &kp W                     &kp E                    &kp R                   &kp T        &kp Y   &kp U                     &kp I                    &kp O                   &kp P                   &none
 &none        &kp A   &layer_tap_left L_MAGIC S &layer_tap_left L_FUNC D &layer_tap_left L_SYM F &kp G        &kp H   &layer_tap_right L_SYM J &layer_tap_right L_FUNC K &layer_tap_right L_MAGIC L &kp SQT                 &none
 &none        &kp Z   &kp X                     &kp C                    &kp V                   &kp B        &kp N   &kp M                     &kp COMMA                &kp DOT                 &kp FSLH                &none
-                    &safe_mt LCTRL TAB  &safe_mt LSHFT BSPC  &safe_space_mt LGUI SPACE  &safe_mt LALT ESC          &safe_mt RALT ENTER  &safe_space_mt RGUI SPACE  &safe_mt RSHFT BSPC  &safe_mt RCTRL TAB
+                    &safe_mt LCTRL TAB  &shift_mt LSHFT BSPC  &safe_space_mt LGUI SPACE  &safe_mt LALT ESC          &safe_mt RALT ENTER  &safe_space_mt RGUI SPACE  &shift_mt RSHFT BSPC  &safe_mt RCTRL TAB
             >;
         };
 

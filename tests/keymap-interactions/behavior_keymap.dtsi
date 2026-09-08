@@ -1,0 +1,62 @@
+/*
+ * Selected production keys, compacted into a 4x4 simulator matrix. The checker
+ * verifies every binding on Base, Symbols and Functional against the positions
+ * below. Magic is only used to check layer activation and transparent thumbs;
+ * its hardware mouse actions and application macros are outside this fixture.
+ *
+ *     D       F       K       J
+ *     S       L     Bspc/S  Bspc/S
+ *     '     Tab/C   Esc/A   Space/G
+ *     A     Tab/C   Enter/A Space/G
+ */
+#include "../hold-taps.dtsi"
+
+#define L_BASE 0
+#define L_SYM 1
+#define L_FUNC 2
+#define L_MAGIC 3
+
+&kscan {
+    rows = <4>;
+    columns = <4>;
+};
+
+/ {
+    test-key-positions = <27 28 32 31 26 33 49 54 34 48 51 50 25 55 52 53>;
+
+    keymap {
+        compatible = "zmk,keymap";
+        base_layer {
+            bindings = <
+                &layer_tap_left L_FUNC D  &layer_tap_left L_SYM F  &layer_tap_right L_FUNC K  &layer_tap_right L_SYM J
+                &layer_tap_left L_MAGIC S &layer_tap_right L_MAGIC L &shift_mt LSHFT BSPC &shift_mt RSHFT BSPC
+                &kp SQT &safe_mt LCTRL TAB &safe_mt LALT ESC &safe_space_mt LGUI SPACE
+                &kp A &safe_mt RCTRL TAB &safe_mt RALT ENTER &safe_space_mt RGUI SPACE
+            >;
+        };
+        symbols_layer {
+            bindings = <
+                &kp UNDER &kp MINUS &kp SEMI &kp COLON
+                &kp AT &kp COMMA &trans &trans
+                &kp DOT &trans &trans &cmd_tog LGUI L_SYM
+                &kp HASH &trans &trans &cmd_tog RGUI L_SYM
+            >;
+        };
+        functional_layer {
+            bindings = <
+                &kp LC(LA(ENTER)) &kp LA(LCTRL) &kp UP &kp DOWN
+                &kp F11 &kp RIGHT &trans &trans
+                &kp HOME &trans &trans &cmd_tog LGUI L_FUNC
+                &kp LC(UP) &trans &trans &cmd_tog RGUI L_FUNC
+            >;
+        };
+        magic_layer {
+            bindings = <
+                &none &none &none &none
+                &none &none &trans &trans
+                &none &trans &trans &cmd_tog LGUI L_MAGIC
+                &none &trans &trans &cmd_tog RGUI L_MAGIC
+            >;
+        };
+    };
+};
