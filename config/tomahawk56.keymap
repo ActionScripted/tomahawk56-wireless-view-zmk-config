@@ -53,21 +53,23 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         };
 
         /*
-         * Tap the letter, hold for the layer. Either hand's next key press
-         * resolves an eligible hold immediately, including D -> F while both
-         * keys remain down. Keep the per-hand behavior labels stable.
+         * Tap the letter, hold for the layer. Overlapping letters must remain
+         * typing in either release order: another key never forces a hold.
+         * Eligible holds resolve after 165 ms. Targets pressed earlier are
+         * buffered and replayed on the layer, so same-hand held chords work
+         * without waiting before pressing their target.
          *
          * The idle guard still forces taps during a typing burst, and quick
-         * taps protect doubled letters ("ss", "ll"). Outside those guards,
-         * overlapping letters can activate a layer even if released as a roll.
+         * taps protect doubled letters ("ss", "ll"). A letter held past the
+         * term can still become a layer outside those guards.
          * Keep the hold as plain &mo: &lrgb_sync is global-locality and would
          * put a blocking split BLE send on the key-press path.
          */
         layer_tap_left: layer_tap_left {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "hold-preferred";
-            tapping-term-ms = <175>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <165>;
             quick-tap-ms = <200>;
             require-prior-idle-ms = <100>;
             bindings = <&mo>, <&kp>;
@@ -76,8 +78,8 @@ nice_view_spi: &spi0 { cs-gpios = <&pro_micro 4 GPIO_ACTIVE_HIGH>; };
         layer_tap_right: layer_tap_right {
             compatible = "zmk,behavior-hold-tap";
             #binding-cells = <2>;
-            flavor = "hold-preferred";
-            tapping-term-ms = <175>;
+            flavor = "tap-preferred";
+            tapping-term-ms = <165>;
             quick-tap-ms = <200>;
             require-prior-idle-ms = <100>;
             bindings = <&mo>, <&kp>;

@@ -1,0 +1,59 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * Typing two layer letters must not activate either layer. Cover all six initial
+ * letters in both release orders after idle. The replayed second letter
+ * qualifies for the typing guard.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_RELEASE(0,1,300)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,300)
+        ZMK_MOCK_PRESS(0,2,30)
+        ZMK_MOCK_PRESS(0,3,30)
+        ZMK_MOCK_RELEASE(0,2,30)
+        ZMK_MOCK_RELEASE(0,3,300)
+        ZMK_MOCK_PRESS(0,3,30)
+        ZMK_MOCK_PRESS(0,2,30)
+        ZMK_MOCK_RELEASE(0,3,30)
+        ZMK_MOCK_RELEASE(0,2,300)
+        ZMK_MOCK_PRESS(1,0,30)
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_RELEASE(1,0,30)
+        ZMK_MOCK_RELEASE(0,0,300)
+        ZMK_MOCK_PRESS(1,1,30)
+        ZMK_MOCK_PRESS(0,2,30)
+        ZMK_MOCK_RELEASE(1,1,30)
+        ZMK_MOCK_RELEASE(0,2,300)
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(0,0,300)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_RELEASE(0,1,300)
+        ZMK_MOCK_PRESS(0,2,30)
+        ZMK_MOCK_PRESS(0,3,30)
+        ZMK_MOCK_RELEASE(0,3,30)
+        ZMK_MOCK_RELEASE(0,2,300)
+        ZMK_MOCK_PRESS(0,3,30)
+        ZMK_MOCK_PRESS(0,2,30)
+        ZMK_MOCK_RELEASE(0,2,30)
+        ZMK_MOCK_RELEASE(0,3,300)
+        ZMK_MOCK_PRESS(1,0,30)
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_RELEASE(1,0,300)
+        ZMK_MOCK_PRESS(1,1,30)
+        ZMK_MOCK_PRESS(0,2,30)
+        ZMK_MOCK_RELEASE(0,2,30)
+        ZMK_MOCK_RELEASE(1,1,300)
+    >;
+};

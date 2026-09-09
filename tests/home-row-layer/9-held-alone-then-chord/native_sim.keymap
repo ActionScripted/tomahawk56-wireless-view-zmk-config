@@ -2,13 +2,13 @@
 
 /*
  * The timer path, and the upper bracket on the tapping term: held alone for
- * 180 ms, S is a layer, and a same-hand key pressed afterwards uses that layer.
+ * 170 ms, S is a layer, and a same-hand key pressed afterwards uses that layer.
  * The decision log must show the timer, not the subsequent key-down, winning.
  * Case 8 pins the other side: a 150 ms dwell is still a letter.
  */
 &kscan {
     events = <
-        ZMK_MOCK_PRESS(0,0,180)
+        ZMK_MOCK_PRESS(0,0,170)
         ZMK_MOCK_PRESS(1,0,30)
         ZMK_MOCK_RELEASE(1,0,30)
         ZMK_MOCK_RELEASE(0,0,10)

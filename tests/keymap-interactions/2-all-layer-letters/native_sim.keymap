@@ -1,25 +1,25 @@
 #include "../behavior_keymap.dtsi"
 
-/* Exercise K, F, J, S and L with same-hand/cross-hand targets and transparent thumbs. D is covered by held-df. Every layer resolves on the target press. */
+/* Exercise K, F, J, S and L with same-hand/cross-hand targets and transparent thumbs. D is covered by held-df. Every layer resolves after its hold threshold. */
 &kscan {
     events = <
         ZMK_MOCK_PRESS(0,2,30)
-        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_PRESS(0,1,180)
         ZMK_MOCK_RELEASE(0,1,30)
         ZMK_MOCK_RELEASE(0,2,300)
         ZMK_MOCK_PRESS(0,1,30)
-        ZMK_MOCK_PRESS(0,3,30)
+        ZMK_MOCK_PRESS(0,3,180)
         ZMK_MOCK_RELEASE(0,3,30)
         ZMK_MOCK_RELEASE(0,1,300)
         ZMK_MOCK_PRESS(0,3,30)
-        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_PRESS(0,1,180)
         ZMK_MOCK_RELEASE(0,1,30)
         ZMK_MOCK_RELEASE(0,3,300)
-        ZMK_MOCK_PRESS(1,0,30)
+        ZMK_MOCK_PRESS(1,0,180)
         ZMK_MOCK_PRESS(1,2,30)
         ZMK_MOCK_RELEASE(1,2,30)
         ZMK_MOCK_RELEASE(1,0,300)
-        ZMK_MOCK_PRESS(1,1,30)
+        ZMK_MOCK_PRESS(1,1,180)
         ZMK_MOCK_PRESS(1,3,30)
         ZMK_MOCK_RELEASE(1,3,30)
         ZMK_MOCK_RELEASE(1,1,300)

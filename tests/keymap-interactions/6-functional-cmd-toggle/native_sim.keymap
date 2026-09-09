@@ -3,7 +3,7 @@
 /* Latch the layer with each Space thumb, re-press within the old 125 ms window and chord Cmd, then unlatch. No accidental toggle or stuck layer may survive the final tap. */
 &kscan {
     events = <
-        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,0,180)
         ZMK_MOCK_PRESS(2,3,30)
         ZMK_MOCK_RELEASE(2,3,30)
         ZMK_MOCK_RELEASE(0,0,20)
@@ -15,7 +15,7 @@
         ZMK_MOCK_RELEASE(2,3,30)
         ZMK_MOCK_PRESS(2,0,30)
         ZMK_MOCK_RELEASE(2,0,300)
-        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(0,0,180)
         ZMK_MOCK_PRESS(3,3,30)
         ZMK_MOCK_RELEASE(3,3,30)
         ZMK_MOCK_RELEASE(0,0,20)

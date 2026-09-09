@@ -1,14 +1,14 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * D then F must hold Option+Control on F down. Another action must preserve
+ * D then F must hold Option+Control once D reaches 165 ms. Another action must preserve
  * both modifiers. Check both release orders: releasing D first returns to Base
  * while F still holds the modifiers. The final apostrophe must be unmodified.
  */
 &kscan {
     events = <
         ZMK_MOCK_PRESS(0,0,30)
-        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_PRESS(0,1,180)
         ZMK_MOCK_PRESS(3,0,30)
         ZMK_MOCK_RELEASE(3,0,30)
         ZMK_MOCK_RELEASE(0,1,30)
@@ -17,7 +17,7 @@
         ZMK_MOCK_RELEASE(2,0,300)
 
         ZMK_MOCK_PRESS(0,0,30)
-        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_PRESS(0,1,180)
         ZMK_MOCK_RELEASE(0,0,30)
         ZMK_MOCK_PRESS(3,0,30)
         ZMK_MOCK_RELEASE(3,0,30)

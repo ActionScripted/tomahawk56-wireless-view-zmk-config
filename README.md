@@ -188,12 +188,16 @@ The five-layer layout is derived from Dygma Defy's Cruiser layout:
   hold it for Cmd.
 - Squeeze the lower two keys of either outer column for Settings.
 
-Layer holds resolve on the next key's press on either hand, so `D` then `F`
-can hold Option+Control without waiting for `F` to be released. Holding a layer
-letter alone activates its layer after 175 ms. The 100 ms prior-idle guard and
-200 ms repeated-letter window still force typing for qualifying presses;
-holding longer cannot turn those presses into layers. Outside those guards,
-overlapping letters can activate a layer.
+Layer letters use tap-preferred resolution: release within 165 ms to type the
+letter, even when another key overlaps in either release order. Holding an
+eligible layer letter past 165 ms activates the layer. You can press the target
+before that threshold and keep both keys held; the target is buffered until
+the layer activates. This applies equally to both hands and all three layers,
+including held Option+Control with `D` then `F`.
+
+The 100 ms prior-idle guard and 200 ms repeated-letter window still force typing
+for qualifying presses; holding longer cannot turn those presses into layers.
+Outside those guards, a letter held past the threshold can still become a layer.
 
 The mirrored thumbs tap Tab, Backspace, and Space; the inner left thumb taps
 Escape and the inner right taps Enter. Their holds are Ctrl, Shift, Cmd, and

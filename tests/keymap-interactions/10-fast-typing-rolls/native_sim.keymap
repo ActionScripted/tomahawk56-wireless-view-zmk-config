@@ -1,0 +1,59 @@
+#include "../behavior_keymap.dtsi"
+
+/*
+ * After idle, normal typing must work for all six layer letters. The layer
+ * letter releases first. Include the reported dr and cross-hand overlaps; no
+ * typing guard can rescue the first press.
+ */
+&kscan {
+    events = <
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(4,0,30)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_RELEASE(4,0,300)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_PRESS(4,0,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(4,0,300)
+        ZMK_MOCK_PRESS(0,2,30)
+        ZMK_MOCK_PRESS(4,3,30)
+        ZMK_MOCK_RELEASE(0,2,30)
+        ZMK_MOCK_RELEASE(4,3,300)
+        ZMK_MOCK_PRESS(0,3,30)
+        ZMK_MOCK_PRESS(4,2,30)
+        ZMK_MOCK_RELEASE(0,3,30)
+        ZMK_MOCK_RELEASE(4,2,300)
+        ZMK_MOCK_PRESS(1,0,30)
+        ZMK_MOCK_PRESS(4,1,30)
+        ZMK_MOCK_RELEASE(1,0,30)
+        ZMK_MOCK_RELEASE(4,1,300)
+        ZMK_MOCK_PRESS(1,1,30)
+        ZMK_MOCK_PRESS(4,3,30)
+        ZMK_MOCK_RELEASE(1,1,30)
+        ZMK_MOCK_RELEASE(4,3,300)
+        ZMK_MOCK_PRESS(0,0,30)
+        ZMK_MOCK_PRESS(4,2,30)
+        ZMK_MOCK_RELEASE(0,0,30)
+        ZMK_MOCK_RELEASE(4,2,300)
+        ZMK_MOCK_PRESS(0,1,30)
+        ZMK_MOCK_PRESS(4,3,30)
+        ZMK_MOCK_RELEASE(0,1,30)
+        ZMK_MOCK_RELEASE(4,3,300)
+        ZMK_MOCK_PRESS(0,2,30)
+        ZMK_MOCK_PRESS(4,1,30)
+        ZMK_MOCK_RELEASE(0,2,30)
+        ZMK_MOCK_RELEASE(4,1,300)
+        ZMK_MOCK_PRESS(0,3,30)
+        ZMK_MOCK_PRESS(4,0,30)
+        ZMK_MOCK_RELEASE(0,3,30)
+        ZMK_MOCK_RELEASE(4,0,300)
+        ZMK_MOCK_PRESS(1,0,30)
+        ZMK_MOCK_PRESS(4,2,30)
+        ZMK_MOCK_RELEASE(1,0,30)
+        ZMK_MOCK_RELEASE(4,2,300)
+        ZMK_MOCK_PRESS(1,1,30)
+        ZMK_MOCK_PRESS(4,1,30)
+        ZMK_MOCK_RELEASE(1,1,30)
+        ZMK_MOCK_RELEASE(4,1,300)
+    >;
+};

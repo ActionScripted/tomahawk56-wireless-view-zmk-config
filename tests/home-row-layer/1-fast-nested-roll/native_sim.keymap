@@ -1,6 +1,6 @@
 #include "../behavior_keymap.dtsi"
 
-/* After idle, even a roll activates the layer on the target's press. */
+/* After idle, a quick overlap must remain typing when the layer key releases first. */
 &kscan {
     events = <
         ZMK_MOCK_PRESS(0,0,30)

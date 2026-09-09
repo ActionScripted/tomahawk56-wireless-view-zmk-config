@@ -1,6 +1,6 @@
 #include "../behavior_keymap.dtsi"
 
-/* Same-hand targets are eligible for immediate layer activation too. */
+/* A quick same-hand sequence remains typing even when the target releases first. */
 &kscan {
     events = <
         ZMK_MOCK_PRESS(0,0,30)

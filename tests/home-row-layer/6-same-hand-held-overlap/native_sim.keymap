@@ -2,7 +2,8 @@
 
 /*
  * Same-hand overlap where the nested key is still held when the tapping term
- * expires. It must already have activated the layer on the target's press.
+ * expires. Activate at the hold threshold even though the target went down
+ * early; this must not inherit the old same-hand veto.
  */
 &kscan {
     events = <

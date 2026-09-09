@@ -1,8 +1,8 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * A deliberate chord started 155 ms in - short of the 175 ms term. It must
- * produce the symbol on the target's press, before the timer can resolve it.
+ * A deliberate chord started 155 ms in - short of the 165 ms term. It must
+ * wait until the 165 ms hold threshold, then produce the symbol while held.
  */
 &kscan {
     events = <

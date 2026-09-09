@@ -1,0 +1,60 @@
+ht_decide: 0 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x07 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x15 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x07 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x15 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 1 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x09 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x15 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x09 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x15 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 2 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x0E implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x12 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x0E implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x12 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 3 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x0D implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x18 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x0D implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x18 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 4 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x16 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x08 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x16 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x08 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 5 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x0F implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x12 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x0F implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x12 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 0 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x07 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x18 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x07 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x18 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 1 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x09 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x12 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x09 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x12 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 2 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x0E implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x08 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x0E implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x08 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 3 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x0D implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x15 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x0D implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x15 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 4 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x16 implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x18 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x16 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x18 implicit_mods 0x00 explicit_mods 0x00
+ht_decide: 5 decided tap (tap-preferred decision moment key-up)
+kp_pressed: usage_page 0x07 keycode 0x0F implicit_mods 0x00 explicit_mods 0x00
+kp_pressed: usage_page 0x07 keycode 0x08 implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x0F implicit_mods 0x00 explicit_mods 0x00
+kp_released: usage_page 0x07 keycode 0x08 implicit_mods 0x00 explicit_mods 0x00

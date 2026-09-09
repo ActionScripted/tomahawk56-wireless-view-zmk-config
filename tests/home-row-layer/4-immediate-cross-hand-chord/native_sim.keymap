@@ -1,11 +1,8 @@
 #include "../behavior_keymap.dtsi"
 
 /*
- * The originally reported misfire, which produced "fj". The layer key down,
- * target down/up, layer key up sequence must resolve to the target's symbol
- * without waiting out the tapping term at all. (Which symbol is a property of
- * the Symbols layer, not of this behavior; the test layer here uses MINUS as a
- * stand-in.)
+ * A quick nested cross-hand sequence is indistinguishable from typing. The
+ * second key's release must not force a layer before the 165 ms hold threshold.
  */
 &kscan {
     events = <
